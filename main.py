@@ -22,9 +22,8 @@ def equalizar_histograma(imagem_cinza):
 
 
 def carregar_classificador(tipo):
-    """Carrega o classificador de acordo com o tipo selecionado"""
     if tipo == 'rosto':
-        return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt2.xml')
+        return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     elif tipo == 'olho':
         return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
     elif tipo == 'boca':
@@ -34,18 +33,15 @@ def carregar_classificador(tipo):
 
 
 def detectar_elementos(imagem_cinza, classificador):
-    """Detecta os elementos na imagem de acordo com o classificador fornecido"""
     return classificador.detectMultiScale(imagem_cinza, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
 
 def desenhar_elementos(imagem, elementos):
-    """Desenha retângulos ao redor dos elementos detectados"""
     for (x, y, w, h) in elementos:
         cv2.rectangle(imagem, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
 
 def exibir_imagem(imagem):
-    """Exibe a imagem processada com o Matplotlib"""
     imagem_rgb = cv2.cvtColor(imagem, cv2.COLOR_BGR2RGB)
     plt.imshow(imagem_rgb)
     plt.axis('off')
@@ -53,7 +49,6 @@ def exibir_imagem(imagem):
 
 
 def salvar_imagem(imagem):
-    """Permite salvar a imagem com os elementos detectados"""
     caminho_arquivo = filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png")])
     if caminho_arquivo:
         cv2.imwrite(caminho_arquivo, imagem)
@@ -61,14 +56,11 @@ def salvar_imagem(imagem):
 
 
 def selecionar_imagem():
-    """Função chamada quando o usuário seleciona uma imagem"""
     caminho_imagem = filedialog.askopenfilename(title="Selecione uma imagem", filetypes=[("Arquivos de Imagem", "*.jpg;*.jpeg;*.png")])
     if caminho_imagem:
         try:
             tipos_detecao = tipo_deteccao.get().split(',')
-            classificador_map = {'rosto': 'haarcascade_frontalface_alt2.xml', 'olho': 'haarcascade_eye.xml', 'boca': 'haarcascade_smile.xml'}
             imagem = carregar_imagem(caminho_imagem)
-
             imagem_cinza = converter_para_cinza(imagem)
             imagem_cinza = equalizar_histograma(imagem_cinza)
 
@@ -79,7 +71,6 @@ def selecionar_imagem():
 
             exibir_imagem(imagem)
 
-            # Perguntar ao usuário se deseja salvar a imagem
             resposta = messagebox.askyesno("Salvar imagem", "Deseja salvar a imagem processada?")
             if resposta:
                 salvar_imagem(imagem)
@@ -89,7 +80,6 @@ def selecionar_imagem():
 
 
 def ajustar_zoom(imagem):
-    """Permite ao usuário ajustar o zoom da imagem"""
     fator_zoom = simpledialog.askfloat("Zoom", "Digite o fator de zoom (ex: 1.0 para normal, 1.5 para 50% maior):", minvalue=0.1, maxvalue=10.0)
     if fator_zoom:
         altura, largura = imagem.shape[:2]
