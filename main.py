@@ -16,14 +16,10 @@ def converter_para_cinza(imagem):
     return cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
 
 
-def equalizar_histograma(imagem_cinza):
-    return cv2.equalizeHist(imagem_cinza)
-
-
 def carregar_classificador(tipo):
     """Carrega o classificador de acordo com o tipo selecionado"""
     if tipo == 'rosto':
-        return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt2.xml')
+        return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     elif tipo == 'olho':
         return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
     elif tipo == 'boca':
@@ -59,10 +55,7 @@ def selecionar_imagem():
             tipo_detecao = tipo_deteccao.get()
             classificador = carregar_classificador(tipo_detecao)
             imagem = carregar_imagem(caminho_imagem)
-
             imagem_cinza = converter_para_cinza(imagem)
-            imagem_cinza = equalizar_histograma(imagem_cinza) 
-
             elementos = detectar_elementos(imagem_cinza, classificador)
             desenhar_elementos(imagem, elementos)
             exibir_imagem(imagem)
