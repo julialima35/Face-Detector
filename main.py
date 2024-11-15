@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import messagebox
 
+
 def carregar_imagem(caminho_imagem):
     imagem = cv2.imread(caminho_imagem)
     if imagem is None:
@@ -16,6 +17,7 @@ def converter_para_cinza(imagem):
 
 
 def carregar_classificador(tipo):
+    """Carrega o classificador de acordo com o tipo selecionado"""
     if tipo == 'rosto':
         return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     elif tipo == 'olho':
@@ -27,32 +29,26 @@ def carregar_classificador(tipo):
 
 
 def detectar_elementos(imagem_cinza, classificador):
+    """Detecta os elementos na imagem de acordo com o classificador fornecido"""
     return classificador.detectMultiScale(imagem_cinza, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
 
 def desenhar_elementos(imagem, elementos):
+    """Desenha retângulos ao redor dos elementos detectados"""
     for (x, y, w, h) in elementos:
         cv2.rectangle(imagem, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
 
 def exibir_imagem(imagem):
+    """Exibe a imagem processada com o Matplotlib"""
     imagem_rgb = cv2.cvtColor(imagem, cv2.COLOR_BGR2RGB)
     plt.imshow(imagem_rgb)
     plt.axis('off')
     plt.show()
 
 
-def reconhecer_rosto(imagem_caminho):
-    face_cascade = cv2.face.LBPHFaceRecognizer_create()
-    face_cascade.read("classificador_face.yml") 
-    imagem = carregar_imagem(imagem_caminho)
-    imagem_cinza = converter_para_cinza(imagem)
-    rostos = detectar_elementos(imagem_cinza, face_cascade)
-    desenhar_elementos(imagem, rostos)
-    exibir_imagem(imagem)
-
-
 def selecionar_imagem():
+    """Função chamada quando o usuário seleciona uma imagem"""
     caminho_imagem = filedialog.askopenfilename(title="Selecione uma imagem", filetypes=[("Arquivos de Imagem", "*.jpg;*.jpeg;*.png")])
     if caminho_imagem:
         try:
@@ -64,23 +60,27 @@ def selecionar_imagem():
             desenhar_elementos(imagem, elementos)
             exibir_imagem(imagem)
         except Exception as e:
-            messagebox.showerror("Erro", str(e))
+            messagebox.showerror("Erro", f"Erro ao processar a imagem: {str(e)}")
 
 
 root = tk.Tk()
 root.title("Detecção de Elementos")
-root.geometry("400x300")  
-root.config(bg="#f0f0f0") 
+root.geometry("450x300")  
+root.config(bg="#f5f5f5")
 
-botao_selecionar = tk.Button(root, text="Selecionar Imagem", command=selecionar_imagem,
-                             bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
-botao_selecionar.pack(padx=20, pady=40)
+titulo = tk.Label(root, text="Detector de Elementos", font=("Arial", 18, "bold"), bg="#f5f5f5")
+titulo.pack(pady=10)
 
-rotulo_instrucoes = tk.Label(root, text="Escolha o tipo de detecção e clique para carregar uma imagem", font=("Arial", 12), bg="#f0f0f0")
-rotulo_instrucoes.pack()
+rotulo_instrucoes = tk.Label(root, text="Escolha o tipo de detecção e selecione uma imagem", font=("Arial", 12), bg="#f5f5f5")
+rotulo_instrucoes.pack(pady=5)
 
 tipo_deteccao = tk.StringVar(value="rosto")
 opcoes_deteccao = tk.OptionMenu(root, tipo_deteccao, "rosto", "olho", "boca")
-opcoes_deteccao.pack()
+opcoes_deteccao.config(font=("Arial", 12), relief="raised", width=10)
+opcoes_deteccao.pack(pady=10)
+
+botao_selecionar = tk.Button(root, text="Selecionar Imagem", command=selecionar_imagem,
+                             bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
+botao_selecionar.pack(pady=20)
 
 root.mainloop()
