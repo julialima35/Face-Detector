@@ -1,28 +1,22 @@
-# Detecção de Rostos em Imagens
+# Detector de Rostos em Imagens
 
-Este projeto utiliza a biblioteca **OpenCV** para realizar a detecção de rostos em imagens. O código carrega uma imagem, converte para escala de cinza, aplica a detecção de rostos usando o classificador Haar Cascade e exibe a imagem com os rostos destacados.
+Este projeto usa a biblioteca **OpenCV** para detectar rostos em uma imagem que você fornecer. O código carrega a imagem, converte para preto e branco, encontra os rostos e coloca retângulos ao redor de cada um deles. Por fim, a imagem com os rostos destacados é exibida. É uma maneira simples e divertida de fazer detecção facial em imagens!
 
 ## Funcionalidades
 
-- **Carregar Imagem**: Lê uma imagem a partir de um caminho especificado.
-- **Converter para Escala de Cinza**: Converte a imagem para escala de cinza para facilitar a detecção.
-- **Detecção de Rostos**: Utiliza o classificador Haar Cascade da OpenCV para identificar rostos na imagem.
-- **Exibição da Imagem**: Exibe a imagem original com retângulos desenhados ao redor dos rostos detectados.
+- **Carregar Imagem**: Você pode carregar qualquer imagem de um arquivo no seu computador.
+- **Detectar Rostos**: Usamos uma ferramenta chamada **Haar Cascade** para encontrar rostos na imagem.
+- **Exibir a Imagem com os Rostos Marcados**: Após detectar os rostos, o programa desenha retângulos ao redor deles e exibe a imagem com as marcações.
 
 ## Tecnologias Utilizadas
 
-- **Python**: Linguagem de programação utilizada para o projeto.
-- **OpenCV**: Biblioteca para processamento de imagens e visão computacional.
-- **Matplotlib**: Biblioteca para exibição de imagens.
+Este projeto usa algumas bibliotecas poderosas do Python:
 
-## Dependências
+- **Python 3.x**: A linguagem de programação que você vai usar.
+- **OpenCV**: A principal biblioteca que usamos para detectar os rostos e manipular a imagem.
+- **Matplotlib**: Usada para exibir a imagem com os rostos detectados.
 
-Este projeto depende das seguintes bibliotecas Python:
-
-- `opencv-python` para manipulação e processamento de imagens.
-- `matplotlib` para visualização das imagens.
-
-Para instalar as dependências, utilize o comando:
+Para instalar as dependências do projeto, basta rodar o seguinte comando:
 
 ```bash
 pip install opencv-python matplotlib
