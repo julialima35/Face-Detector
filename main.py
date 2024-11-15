@@ -2,6 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import messagebox
 
 def carregar_imagem(caminho_imagem):
     imagem = cv2.imread(caminho_imagem)
@@ -42,13 +43,22 @@ def detectar_rostos_na_imagem(caminho_imagem):
 def selecionar_imagem():
     caminho_imagem = filedialog.askopenfilename(title="Selecione uma imagem", filetypes=[("Arquivos de Imagem", "*.jpg;*.jpeg;*.png")])
     if caminho_imagem:
-        detectar_rostos_na_imagem(caminho_imagem)
+        try:
+            detectar_rostos_na_imagem(caminho_imagem)
+        except Exception as e:
+            messagebox.showerror("Erro", str(e))
 
 
 root = tk.Tk()
 root.title("Detector de Rostos")
+root.geometry("400x200")  
+root.config(bg="#f0f0f0") 
 
-botao_selecionar = tk.Button(root, text="Selecionar Imagem", command=selecionar_imagem)
-botao_selecionar.pack(padx=20, pady=20)
+botao_selecionar = tk.Button(root, text="Selecionar Imagem", command=selecionar_imagem,
+                             bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
+botao_selecionar.pack(padx=20, pady=40)
+
+rotulo_instrucoes = tk.Label(root, text="Clique no botão para carregar uma imagem", font=("Arial", 12), bg="#f0f0f0")
+rotulo_instrucoes.pack()
 
 root.mainloop()
