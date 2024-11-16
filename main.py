@@ -1,124 +1,125 @@
 import cv2
 import matplotlib.pyplot as plt
 import tkinter as tk
-from tkinter import filedialog
-from tkinter import messagebox
-from tkinter import simpledialog
+from tkinter import filedialog, messagebox
 
-def carregar_imagem(caminho_imagem):
-    imagem = cv2.imread(caminho_imagem)
-    if imagem is None:
-        raise ValueError(f"Não foi possível carregar a imagem do caminho: {caminho_imagem}")
-    return imagem
 
-def converter_para_cinza(imagem):
-    return cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
+class ImageProcessor:
+    def __init__(self, image_path):
+        self.image = self.load_image(image_path)
+        self.gray_image = self.convert_to_gray(self.image)
+        self.equalized_image = self.equalize_histogram(self.gray_image)
 
-def equalizar_histograma(imagem_cinza):
-    return cv2.equalizeHist(imagem_cinza)
+    @staticmethod
+    def load_image(path):
+        image = cv2.imread(path)
+        if image is None:
+            raise ValueError(f"Não foi possível carregar a imagem do caminho: {path}")
+        return image
 
-def carregar_classificador(tipo):
-    """Carrega o classificador de acordo com o tipo selecionado"""
-    if tipo == 'rosto':
-        return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt2.xml')
-    elif tipo == 'olho':
-        return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
-    elif tipo == 'boca':
-        return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_smile.xml')
-    else:
-        raise ValueError("Tipo desconhecido de classificador.")
+    @staticmethod
+    def convert_to_gray(image):
+        return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-def detectar_elementos(imagem_cinza, classificador):
-    """Detecta os elementos na imagem de acordo com o classificador fornecido"""
-    return classificador.detectMultiScale(imagem_cinza, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    @staticmethod
+    def equalize_histogram(gray_image):
+        return cv2.equalizeHist(gray_image)
 
-def desenhar_elementos(imagem, elementos):
-    """Desenha retângulos ao redor dos elementos detectados"""
-    for (x, y, w, h) in elementos:
-        cv2.rectangle(imagem, (x, y), (x + w, y + h), (255, 0, 0), 2)
+    def detect_elements(self, classifier_type):
+        classifier = ClassifierLoader.load_classifier(classifier_type)
+        return classifier.detectMultiScale(self.equalized_image, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
-def exibir_imagem(imagem):
-    """Exibe a imagem processada com o Matplotlib"""
-    imagem_rgb = cv2.cvtColor(imagem, cv2.COLOR_BGR2RGB)
-    plt.imshow(imagem_rgb)
-    plt.axis('off')
-    plt.show()
+    def draw_detected_elements(self, elements):
+        for (x, y, w, h) in elements:
+            cv2.rectangle(self.image, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-def salvar_imagem(imagem):
-    """Permite salvar a imagem com os elementos detectados"""
-    caminho_arquivo = filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png")])
-    if caminho_arquivo:
-        cv2.imwrite(caminho_arquivo, imagem)
-        messagebox.showinfo("Sucesso", "Imagem salva com sucesso!")
+    def save_image(self):
+        path = filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png")])
+        if path:
+            cv2.imwrite(path, self.image)
+            messagebox.showinfo("Sucesso", "Imagem salva com sucesso!")
 
-def selecionar_imagem():
-    """Função chamada quando o usuário seleciona uma imagem"""
-    caminho_imagem = filedialog.askopenfilename(title="Selecione uma imagem", filetypes=[("Arquivos de Imagem", "*.jpg;*.jpeg;*.png")])
-    if caminho_imagem:
-        try:
-            tipos_detecao = [tipo.get() for tipo in checkboxes if tipo.get()]
-            classificador_map = {'rosto': 'haarcascade_frontalface_alt2.xml', 'olho': 'haarcascade_eye.xml', 'boca': 'haarcascade_smile.xml'}
-            imagem = carregar_imagem(caminho_imagem)
+    def display_image(self):
+        rgb_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+        plt.imshow(rgb_image)
+        plt.axis('off')
+        plt.show()
 
-            imagem_cinza = converter_para_cinza(imagem)
-            imagem_cinza = equalizar_histograma(imagem_cinza)
 
-            for tipo in tipos_detecao:
-                classificador = carregar_classificador(tipo)
-                elementos = detectar_elementos(imagem_cinza, classificador)
-                desenhar_elementos(imagem, elementos)
+class ClassifierLoader:
+    classifiers = {
+        'rosto': 'haarcascade_frontalface_alt2.xml',
+        'olho': 'haarcascade_eye.xml',
+        'boca': 'haarcascade_smile.xml'
+    }
 
-            exibir_imagem(imagem)
+    @staticmethod
+    def load_classifier(type):
+        if type not in ClassifierLoader.classifiers:
+            raise ValueError(f"Tipo desconhecido de classificador: {type}")
+        return cv2.CascadeClassifier(cv2.data.haarcascades + ClassifierLoader.classifiers[type])
 
-            resposta = messagebox.askyesno("Salvar imagem", "Deseja salvar a imagem processada?")
-            if resposta:
-                salvar_imagem(imagem)
 
-        except ValueError as ve:
-            messagebox.showerror("Erro", f"Erro de valor: {str(ve)}")
-        except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao processar a imagem: {str(e)}")
+class GUI:
+    def __init__(self, root):
+        self.root = root
+        self.checkboxes = []
+        self.setup_ui()
 
-def ajustar_zoom(imagem):
-    """Permite ao usuário ajustar o zoom da imagem"""
-    fator_zoom = simpledialog.askfloat("Zoom", "Digite o fator de zoom (ex: 1.0 para normal, 1.5 para 50% maior):", minvalue=0.1, maxvalue=10.0)
-    if fator_zoom:
-        altura, largura = imagem.shape[:2]
-        nova_largura = int(largura * fator_zoom)
-        nova_altura = int(altura * fator_zoom)
-        imagem_zoomin = cv2.resize(imagem, (nova_largura, nova_altura))
+    def setup_ui(self):
+        self.root.title("Detecção de Elementos")
+        self.root.geometry("450x400")
+        self.root.config(bg="#f5f5f5")
 
-        exibir_imagem(imagem_zoomin)
+        self.create_widgets()
 
-root = tk.Tk()
-root.title("Detecção de Elementos")
-root.geometry("450x400")  
-root.config(bg="#f5f5f5")
+    def create_widgets(self):
+        title_label = tk.Label(self.root, text="Detector de Elementos", font=("Arial", 18, "bold"), bg="#f5f5f5")
+        title_label.pack(pady=10)
 
-titulo = tk.Label(root, text="Detector de Elementos", font=("Arial", 18, "bold"), bg="#f5f5f5")
-titulo.pack(pady=10)
+        instructions_label = tk.Label(self.root, text="Escolha os tipos de detecção e selecione uma imagem", font=("Arial", 12), bg="#f5f5f5")
+        instructions_label.pack(pady=5)
 
-rotulo_instrucoes = tk.Label(root, text="Escolha os tipos de detecção e selecione uma imagem", font=("Arial", 12), bg="#f5f5f5")
-rotulo_instrucoes.pack(pady=5)
+        self.create_checkboxes()
 
-checkboxes = []
+        select_button = tk.Button(self.root, text="Selecionar Imagem", command=self.select_image,
+                                  bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
+        select_button.pack(pady=20)
 
-def criar_checkbox(tipo):
-    var = tk.StringVar(value=tipo)
-    checkbox = tk.Checkbutton(root, text=tipo.capitalize(), variable=var, onvalue=tipo, offvalue="")
-    checkbox.pack(anchor="w")
-    checkboxes.append(var)
+    def create_checkboxes(self):
+        for classifier in ['rosto', 'olho', 'boca']:
+            var = tk.StringVar(value=classifier)
+            checkbox = tk.Checkbutton(self.root, text=classifier.capitalize(), variable=var, onvalue=classifier, offvalue="")
+            checkbox.pack(anchor="w")
+            self.checkboxes.append(var)
 
-criar_checkbox("rosto")
-criar_checkbox("olho")
-criar_checkbox("boca")
+    def select_image(self):
+        image_path = filedialog.askopenfilename(title="Selecione uma imagem", filetypes=[("Arquivos de Imagem", "*.jpg;*.jpeg;*.png")])
+        if image_path:
+            try:
+                selected_types = [var.get() for var in self.checkboxes if var.get()]
+                image_processor = ImageProcessor(image_path)
 
-botao_selecionar = tk.Button(root, text="Selecionar Imagem", command=selecionar_imagem,
-                             bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
-botao_selecionar.pack(pady=20)
+                for detection_type in selected_types:
+                    elements = image_processor.detect_elements(detection_type)
+                    image_processor.draw_detected_elements(elements)
 
-botao_zoom = tk.Button(root, text="Ajustar Zoom", command=lambda: ajustar_zoom(cv2.imread(filedialog.askopenfilename())) ,
-                       bg="#2196F3", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
-botao_zoom.pack(pady=10)
+                image_processor.display_image()
 
-root.mainloop()
+                if messagebox.askyesno("Salvar imagem", "Deseja salvar a imagem processada?"):
+                    image_processor.save_image()
+
+            except ValueError as e:
+                messagebox.showerror("Erro", f"Erro: {str(e)}")
+            except Exception as e:
+                messagebox.showerror("Erro", f"Erro ao processar a imagem: {str(e)}")
+
+
+def run_gui():
+    root = tk.Tk()
+    gui = GUI(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    run_gui()
