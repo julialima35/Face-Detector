@@ -12,9 +12,6 @@ def carregar_imagem(caminho_imagem):
 def converter_para_cinza(imagem):
     return cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
 
-def equalizar_histograma(imagem_cinza):
-    return cv2.equalizeHist(imagem_cinza)
-
 def carregar_classificador(tipo):
     classificadores = {
         'rosto': 'haarcascade_frontalface_alt2.xml',
@@ -38,12 +35,6 @@ def exibir_imagem(imagem):
     plt.axis('off')
     plt.show()
 
-def salvar_imagem(imagem):
-    caminho_arquivo = filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png")])
-    if caminho_arquivo:
-        cv2.imwrite(caminho_arquivo, imagem)
-        messagebox.showinfo("Sucesso", "Imagem salva com sucesso!")
-
 def selecionar_imagem():
     caminho_imagem = filedialog.askopenfilename(title="Selecione uma imagem", filetypes=[("Arquivos de Imagem", "*.jpg;*.jpeg;*.png")])
     if caminho_imagem:
@@ -52,17 +43,12 @@ def selecionar_imagem():
             imagem = carregar_imagem(caminho_imagem)
 
             imagem_cinza = converter_para_cinza(imagem)
-            imagem_cinza = equalizar_histograma(imagem_cinza)
-
             for tipo in tipos_detecao:
                 classificador = carregar_classificador(tipo)
                 elementos = detectar_elementos(imagem_cinza, classificador)
                 desenhar_elementos(imagem, elementos)
 
             exibir_imagem(imagem)
-
-            if messagebox.askyesno("Salvar imagem", "Deseja salvar a imagem processada?"):
-                salvar_imagem(imagem)
 
         except ValueError as ve:
             messagebox.showerror("Erro", f"Erro de valor: {str(ve)}")
