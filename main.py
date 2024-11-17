@@ -1,7 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
+from tkinter import filedialog, messagebox
 
 def carregar_imagem(caminho_imagem):
     imagem = cv2.imread(caminho_imagem)
@@ -69,15 +69,6 @@ def selecionar_imagem():
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao processar a imagem: {str(e)}")
 
-def ajustar_zoom(imagem):
-    fator_zoom = simpledialog.askfloat("Zoom", "Digite o fator de zoom (ex: 1.0 para normal, 1.5 para 50% maior):", minvalue=0.1, maxvalue=10.0)
-    if fator_zoom:
-        altura, largura = imagem.shape[:2]
-        nova_largura = int(largura * fator_zoom)
-        nova_altura = int(altura * fator_zoom)
-        imagem_zoomin = cv2.resize(imagem, (nova_largura, nova_altura))
-        exibir_imagem(imagem_zoomin)
-
 root = tk.Tk()
 root.title("Detecção de Elementos")
 root.geometry("450x400")
@@ -104,9 +95,5 @@ criar_checkbox("boca")
 botao_selecionar = tk.Button(root, text="Selecionar Imagem", command=selecionar_imagem,
                              bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
 botao_selecionar.pack(pady=20)
-
-botao_zoom = tk.Button(root, text="Ajustar Zoom", command=lambda: ajustar_zoom(cv2.imread(filedialog.askopenfilename())) ,
-                       bg="#2196F3", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
-botao_zoom.pack(pady=10)
 
 root.mainloop()
