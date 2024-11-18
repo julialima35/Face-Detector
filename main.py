@@ -2,125 +2,123 @@ import cv2
 import os
 import tkinter as tk
 from tkinter import filedialog
-from PIL import Image, ImageTk 
+from PIL import Image, ImageTk
 import numpy as np
 import pickle
 
-
-diretorio_imagens = 'fotos_usuarios'
-if not os.path.exists(diretorio_imagens):
-    os.makedirs(diretorio_imagens)
-
-
-def carregar_imagem(caminho_imagem):
-    imagem = cv2.imread(caminho_imagem)
-    if imagem is None:
-        raise ValueError(f"Não foi possível carregar a imagem do caminho: {caminho_imagem}")
-    return imagem
+pasta_usuarios = 'usuarios'
+if not os.path.exists(pasta_usuarios):
+    os.makedirs(pasta_usuarios)
 
 
-def converter_para_cinza(imagem):
-    return cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
+def carregar_foto(caminho):
+    foto = cv2.imread(caminho)
+    if foto is None:
+        raise ValueError(f"Não foi possível carregar a foto: {caminho}")
+    return foto
 
 
-def carregar_classificador():
+def foto_cinza(foto):
+    return cv2.cvtColor(foto, cv2.COLOR_BGR2GRAY)
+
+
+def carregar_modelo():
     return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt2.xml')
 
 
-def detectar_rosto(imagem_cinza, classificador):
-    return classificador.detectMultiScale(imagem_cinza, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+def detectar_usuarios(foto_cinza, modelo):
+    return modelo.detectMultiScale(foto_cinza, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
 
-def verificar_rosto_no_banco(imagem_rosto, rosto_id):
-    arquivo_banco = 'banco_de_dados_faces.pkl'
+def usuario_no_banco(usuario, id_usuario):
+    arquivo_banco = 'banco_usuarios.pkl'
     if os.path.exists(arquivo_banco):
         with open(arquivo_banco, 'rb') as f:
-            banco_de_dados = pickle.load(f)
-        if rosto_id in banco_de_dados:
+            banco = pickle.load(f)
+        if id_usuario in banco:
             return True
     return False
 
 
-def salvar_rosto_no_banco(imagem_rosto, rosto_id):
-    arquivo_banco = 'banco_de_dados_faces.pkl'
+def salvar_usuario(usuario, id_usuario):
+    arquivo_banco = 'banco_usuarios.pkl'
     if os.path.exists(arquivo_banco):
         with open(arquivo_banco, 'rb') as f:
-            banco_de_dados = pickle.load(f)
+            banco = pickle.load(f)
     else:
-        banco_de_dados = {}
+        banco = {}
 
-    caminho_foto = os.path.join(diretorio_imagens, f'{rosto_id}.jpg')
-    cv2.imwrite(caminho_foto, imagem_rosto)
-    banco_de_dados[rosto_id] = caminho_foto
+    caminho_foto = os.path.join(pasta_usuarios, f'{id_usuario}.jpg')
+    cv2.imwrite(caminho_foto, usuario)
+    banco[id_usuario] = caminho_foto
 
     with open(arquivo_banco, 'wb') as f:
-        pickle.dump(banco_de_dados, f)
+        pickle.dump(banco, f)
 
 
-def atualizar_status(status):
-    status_label.config(text=status)
+def atualizar_msg(msg):
+    lbl_msg.config(text=msg)
 
 
-def exibir_imagem_tkinter(imagem):
-    imagem_rgb = cv2.cvtColor(imagem, cv2.COLOR_BGR2RGB)
-    imagem_pil = Image.fromarray(imagem_rgb)
-    imagem_tk = ImageTk.PhotoImage(imagem_pil)
-    
-    imagem_label.config(image=imagem_tk)
-    imagem_label.image = imagem_tk
+def mostrar_foto(foto):
+    foto_rgb = cv2.cvtColor(foto, cv2.COLOR_BGR2RGB)
+    foto_pil = Image.fromarray(foto_rgb)
+    foto_tk = ImageTk.PhotoImage(foto_pil)
+
+    lbl_foto.config(image=foto_tk)
+    lbl_foto.image = foto_tk
 
 
-def selecionar_imagem():
-    caminho_imagem = filedialog.askopenfilename(title="Selecione uma imagem", filetypes=[("Arquivos de Imagem", "*.jpg;*.jpeg;*.png")])
-    if caminho_imagem:
+def escolher_foto():
+    caminho = filedialog.askopenfilename(title="Selecione uma foto", filetypes=[("Imagens", "*.jpg;*.jpeg;*.png")])
+    if caminho:
         try:
-            imagem = carregar_imagem(caminho_imagem)
-            imagem_cinza = converter_para_cinza(imagem)
+            foto = carregar_foto(caminho)
+            cinza = foto_cinza(foto)
 
-            classificador = carregar_classificador()
-            rostos = detectar_rosto(imagem_cinza, classificador)
+            modelo = carregar_modelo()
+            usuarios = detectar_usuarios(cinza, modelo)
 
-            if len(rostos) == 0:
-                atualizar_status("Nenhum rosto detectado na imagem.")
+            if len(usuarios) == 0:
+                atualizar_msg("Nenhum usuário detectado.")
                 return
 
-            for (x, y, w, h) in rostos:
-                rosto_id = f'rosto_{x}_{y}' 
-                imagem_rosto = imagem[y:y+h, x:x+w]
+            for (x, y, w, h) in usuarios:
+                id_usuario = f'usuario_{x}_{y}'
+                usuario = foto[y:y+h, x:x+w]
 
-                if verificar_rosto_no_banco(imagem_rosto, rosto_id):
-                    atualizar_status("Rosto já está no banco de dados.")
+                if usuario_no_banco(usuario, id_usuario):
+                    atualizar_msg("Usuário já cadastrado.")
                 else:
-                    salvar_rosto_no_banco(imagem_rosto, rosto_id)
-                    atualizar_status("Novo rosto salvo no banco de dados.")
+                    salvar_usuario(usuario, id_usuario)
+                    atualizar_msg("Novo usuário cadastrado com sucesso.")
 
-            exibir_imagem_tkinter(imagem)
+            mostrar_foto(foto)
 
         except ValueError as ve:
-            atualizar_status(f"Erro de valor: {str(ve)}")
+            atualizar_msg(f"Erro: {str(ve)}")
         except Exception as e:
-            atualizar_status(f"Erro ao processar a imagem: {str(e)}")
+            atualizar_msg(f"Erro ao processar: {str(e)}")
 
 
-root = tk.Tk()
-root.title("Detecção e Armazenamento de Rostos")
-root.geometry("450x600")
-root.config(bg="#f5f5f5")
+app = tk.Tk()
+app.title("Detector de Usuários")
+app.geometry("450x600")
+app.config(bg="#f5f5f5")
 
-titulo = tk.Label(root, text="Detector de Rostos", font=("Arial", 18, "bold"), bg="#f5f5f5")
-titulo.pack(pady=10)
+lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
+lbl_titulo.pack(pady=10)
 
-rotulo_instrucoes = tk.Label(root, text="Selecione uma imagem para detectar e salvar rostos", font=("Arial", 12), bg="#f5f5f5")
-rotulo_instrucoes.pack(pady=5)
+lbl_instr = tk.Label(app, text="Escolha uma foto para detectar usuários", font=("Arial", 12), bg="#f5f5f5")
+lbl_instr.pack(pady=5)
 
-botao_selecionar = tk.Button(root, text="Selecionar Imagem", command=selecionar_imagem,
-                             bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
-botao_selecionar.pack(pady=20)
+btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
+btn_escolher.pack(pady=20)
 
-status_label = tk.Label(root, text="", font=("Arial", 12), bg="#f5f5f5", fg="blue")
-status_label.pack(pady=10)
+lbl_msg = tk.Label(app, text="", font=("Arial", 12), bg="#f5f5f5", fg="blue")
+lbl_msg.pack(pady=10)
 
-imagem_label = tk.Label(root, bg="#f5f5f5")
-imagem_label.pack(pady=20)
+lbl_foto = tk.Label(app, bg="#f5f5f5")
+lbl_foto.pack(pady=20)
 
-root.mainloop()
+app.mainloop()
