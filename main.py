@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import numpy as np
 import pickle
-
+import matplotlib.pyplot as plt  # Adicionando a importação do matplotlib
 
 diretorio_imagens = 'fotos_usuarios'
 if not os.path.exists(diretorio_imagens):
@@ -30,7 +30,6 @@ def detectar_rosto(imagem_cinza, classificador):
     return classificador.detectMultiScale(imagem_cinza, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
 
-
 def verificar_rosto_no_banco(imagem_rosto, rosto_id):
     arquivo_banco = 'banco_de_dados_faces.pkl'
     if os.path.exists(arquivo_banco):
@@ -48,7 +47,6 @@ def salvar_rosto_no_banco(imagem_rosto, rosto_id):
             banco_de_dados = pickle.load(f)
     else:
         banco_de_dados = {}
-
 
     caminho_foto = os.path.join(diretorio_imagens, f'{rosto_id}.jpg')
     cv2.imwrite(caminho_foto, imagem_rosto)
