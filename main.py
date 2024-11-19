@@ -61,12 +61,28 @@ def atualizar_msg(msg):
 
 
 def mostrar_foto(foto):
-    foto_rgb = cv2.cvtColor(foto, cv2.COLOR_BGR2RGB)
+    # Definindo o tamanho máximo de exibição
+    largura_max = 400
+    altura_max = 400
+    
+    # Redimensionando a imagem para não ultrapassar o tamanho máximo
+    altura, largura = foto.shape[:2]
+    proporcao = min(largura_max / largura, altura_max / altura)
+    nova_largura = int(largura * proporcao)
+    nova_altura = int(altura * proporcao)
+    
+    # Redimensiona a foto para se ajustar ao tamanho desejado
+    foto_redimensionada = cv2.resize(foto, (nova_largura, nova_altura))
+    
+    # Convertendo para o formato RGB para exibir com PIL
+    foto_rgb = cv2.cvtColor(foto_redimensionada, cv2.COLOR_BGR2RGB)
     foto_pil = Image.fromarray(foto_rgb)
     foto_tk = ImageTk.PhotoImage(foto_pil)
 
+    # Atualizando o label com a nova imagem redimensionada
     lbl_foto.config(image=foto_tk)
     lbl_foto.image = foto_tk
+
 
 
 def escolher_foto():
