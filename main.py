@@ -61,20 +61,18 @@ def atualizar_msg(msg):
 
 
 def mostrar_foto(foto):
-    foto_rgb = cv2.cvtColor(foto, cv2.COLOR_BGR2RGB)
+    largura_max = 400
+    altura_max = 400
+    
+    altura, largura = foto.shape[:2]
+    proporcao = min(largura_max / largura, altura_max / altura)
+    nova_largura = int(largura * proporcao)
+    nova_altura = int(altura * proporcao)
+    
+    foto_redimensionada = cv2.resize(foto, (nova_largura, nova_altura))
+    
+    foto_rgb = cv2.cvtColor(foto_redimensionada, cv2.COLOR_BGR2RGB)
     foto_pil = Image.fromarray(foto_rgb)
-    
-    largura_maxima = 400  
-    altura_maxima = 300  
-
-    largura_original, altura_original = foto_pil.size
-
-    proporcao = min(largura_maxima / largura_original, altura_maxima / altura_original)
-    nova_largura = int(largura_original * proporcao)
-    nova_altura = int(altura_original * proporcao)
-
-    foto_pil = foto_pil.resize((nova_largura, nova_altura), Image.ANTIALIAS)
-    
     foto_tk = ImageTk.PhotoImage(foto_pil)
 
     lbl_foto.config(image=foto_tk)
