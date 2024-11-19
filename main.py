@@ -123,7 +123,7 @@ def escolher_foto():
                     x, y, w_box, h_box = (int(bboxC.xmin * w), int(bboxC.ymin * h),
                                           int(bboxC.width * w), int(bboxC.height * h))
 
-                    usuario = foto[y:y+h_box, x:x+w_box]
+                    usuario = foto[y:y + h_box, x:x + w_box]
                     id_usuario = f'usuario_{idx}'
 
                     if usuario_no_banco(id_usuario):
@@ -153,6 +153,77 @@ def escolher_foto():
             atualizar_msg(f"Erro ao processar: {str(e)}")
 
 
+def capturar_foto():
+    try:
+        captura = cv2.VideoCapture(0)
+
+        if not captura.isOpened():
+            atualizar_msg("Não foi possível acessar a câmera.")
+            return
+
+        atualizar_msg("Pressione 'Espaço' para capturar a foto ou 'Esc' para sair.")
+
+        while True:
+            ret, frame = captura.read()
+            if not ret:
+                atualizar_msg("Erro ao capturar a imagem da câmera.")
+                break
+
+            cv2.imshow("Captura de Foto - Pressione 'Espaço' para capturar", frame)
+
+            key = cv2.waitKey(1)
+            if key == 27:  
+                break
+            elif key == 32:  
+
+                captura.release()
+                cv2.destroyAllWindows()
+
+                with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
+                    foto_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    resultado = face_detection.process(foto_rgb)
+
+                    if not resultado.detections:
+                        atualizar_msg("Nenhum rosto detectado.")
+                        return
+
+                    for idx, deteccao in enumerate(resultado.detections):
+                        bboxC = deteccao.location_data.relative_bounding_box
+                        h, w, _ = frame.shape
+                        x, y, w_box, h_box = (int(bboxC.xmin * w), int(bboxC.ymin * h),
+                                              int(bboxC.width * w), int(bboxC.height * h))
+
+                        usuario = frame[y:y + h_box, x:x + w_box]
+                        id_usuario = f'usuario_{idx}'
+
+                        if usuario_no_banco(id_usuario):
+                            atualizar_msg(f"Usuário {id_usuario} já cadastrado.")
+                        else:
+                            nome = simpledialog.askstring("Nome", "Digite o nome do usuário:")
+                            email = simpledialog.askstring("E-mail", "Digite o e-mail do usuário:")
+                            telefone = simpledialog.askstring("Telefone", "Digite o telefone do usuário:")
+
+                            dados_usuario = {
+                                "nome": nome,
+                                "email": email,
+                                "telefone": telefone
+                            }
+
+                            salvar_usuario(usuario, id_usuario, dados_usuario)
+                            atualizar_msg(f"Usuário {id_usuario} cadastrado com sucesso.")
+
+                    for deteccao in resultado.detections:
+                        mp_drawing.draw_detection(frame, deteccao)
+
+                    mostrar_foto(frame)
+                break
+
+        captura.release()
+        cv2.destroyAllWindows()
+    except Exception as e:
+        atualizar_msg(f"Erro ao acessar a câmera: {str(e)}")
+
+
 app = tk.Tk()
 app.title("Detector de Usuários")
 app.geometry("450x600")
@@ -161,11 +232,14 @@ app.config(bg="#f5f5f5")
 lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
 lbl_titulo.pack(pady=10)
 
-lbl_instr = tk.Label(app, text="Escolha uma foto para detectar usuários", font=("Arial", 12), bg="#f5f5f5")
+lbl_instr = tk.Label(app, text="Escolha uma foto ou use a câmera para detectar usuários", font=("Arial", 12), bg="#f5f5f5")
 lbl_instr.pack(pady=5)
 
 btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
 btn_escolher.pack(pady=20)
+
+btn_capturar = tk.Button(app, text="Capturar Foto com Câmera", command=capturar_foto, bg="#FFC107", fg="black", font=("Arial", 14, "bold"), relief="raised", bd=5)
+btn_capturar.pack(pady=20)
 
 btn_exibir = tk.Button(app, text="Exibir Dados dos Usuários", command=exibir_dados_usuario, bg="#2196F3", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
 btn_exibir.pack(pady=10)
