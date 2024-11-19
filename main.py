@@ -5,7 +5,10 @@ from tkinter import filedialog, simpledialog
 from PIL import Image, ImageTk
 import numpy as np
 import pickle
+import mediapipe as mp
 
+mp_face_detection = mp.solutions.face_detection
+mp_drawing = mp.solutions.drawing_utils
 
 pasta_usuarios = 'usuarios'
 if not os.path.exists(pasta_usuarios):
@@ -18,14 +21,6 @@ def carregar_foto(caminho):
         raise ValueError(f"Não foi possível carregar a foto: {caminho}")
     return foto
 
-def foto_cinza(foto):
-    return cv2.cvtColor(foto, cv2.COLOR_BGR2GRAY)
-
-def carregar_modelo():
-    return cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt2.xml')
-
-def detectar_usuarios(foto_cinza, modelo):
-    return modelo.detectMultiScale(foto_cinza, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
 def carregar_banco():
     arquivo_banco = 'banco_usuarios.pkl'
@@ -34,14 +29,17 @@ def carregar_banco():
             return pickle.load(f)
     return {}
 
+
 def salvar_banco(banco):
     arquivo_banco = 'banco_usuarios.pkl'
     with open(arquivo_banco, 'wb') as f:
         pickle.dump(banco, f)
 
+
 def usuario_no_banco(id_usuario):
     banco = carregar_banco()
     return id_usuario in banco
+
 
 def salvar_usuario(usuario, id_usuario, dados_usuario):
     banco = carregar_banco()
@@ -56,12 +54,13 @@ def salvar_usuario(usuario, id_usuario, dados_usuario):
 
     salvar_banco(banco)
 
+
 def exibir_dados_usuario():
     banco = carregar_banco()
     if not banco:
         atualizar_msg("Nenhum usuário cadastrado.")
         return
-    
+
     janela_dados = tk.Toplevel(app)
     janela_dados.title("Dados dos Usuários")
     janela_dados.geometry("400x400")
@@ -80,20 +79,22 @@ def exibir_dados_usuario():
 
     texto.config(state=tk.DISABLED)
 
+
 def atualizar_msg(msg):
     lbl_msg.config(text=msg)
+
 
 def mostrar_foto(foto):
     largura_max = 400
     altura_max = 400
-    
+
     altura, largura = foto.shape[:2]
     proporcao = min(largura_max / largura, altura_max / altura)
     nova_largura = int(largura * proporcao)
     nova_altura = int(altura * proporcao)
-    
+
     foto_redimensionada = cv2.resize(foto, (nova_largura, nova_altura))
-    
+
     foto_rgb = cv2.cvtColor(foto_redimensionada, cv2.COLOR_BGR2RGB)
     foto_pil = Image.fromarray(foto_rgb)
     foto_tk = ImageTk.PhotoImage(foto_pil)
@@ -107,36 +108,44 @@ def escolher_foto():
     if caminho:
         try:
             foto = carregar_foto(caminho)
-            cinza = foto_cinza(foto)
 
-            modelo = carregar_modelo()
-            usuarios = detectar_usuarios(cinza, modelo)
+            with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
+                foto_rgb = cv2.cvtColor(foto, cv2.COLOR_BGR2RGB)
+                resultado = face_detection.process(foto_rgb)
 
-            if len(usuarios) == 0:
-                atualizar_msg("Nenhum usuário detectado.")
-                return
+                if not resultado.detections:
+                    atualizar_msg("Nenhum rosto detectado.")
+                    return
 
-            for (x, y, w, h) in usuarios:
-                id_usuario = f'usuario_{x}_{y}'
-                usuario = foto[y:y+h, x:x+w]
+                for idx, deteccao in enumerate(resultado.detections):
+                    bboxC = deteccao.location_data.relative_bounding_box
+                    h, w, _ = foto.shape
+                    x, y, w_box, h_box = (int(bboxC.xmin * w), int(bboxC.ymin * h),
+                                          int(bboxC.width * w), int(bboxC.height * h))
 
-                if usuario_no_banco(id_usuario):
-                    atualizar_msg("Usuário já cadastrado.")
-                else:
-                    nome = simpledialog.askstring("Nome", "Digite o nome do usuário:")
-                    email = simpledialog.askstring("E-mail", "Digite o e-mail do usuário:")
-                    telefone = simpledialog.askstring("Telefone", "Digite o telefone do usuário:")
+                    usuario = foto[y:y+h_box, x:x+w_box]
+                    id_usuario = f'usuario_{idx}'
 
-                    dados_usuario = {
-                        "nome": nome,
-                        "email": email,
-                        "telefone": telefone
-                    }
+                    if usuario_no_banco(id_usuario):
+                        atualizar_msg(f"Usuário {id_usuario} já cadastrado.")
+                    else:
+                        nome = simpledialog.askstring("Nome", "Digite o nome do usuário:")
+                        email = simpledialog.askstring("E-mail", "Digite o e-mail do usuário:")
+                        telefone = simpledialog.askstring("Telefone", "Digite o telefone do usuário:")
 
-                    salvar_usuario(usuario, id_usuario, dados_usuario)
-                    atualizar_msg("Novo usuário cadastrado com sucesso.")
+                        dados_usuario = {
+                            "nome": nome,
+                            "email": email,
+                            "telefone": telefone
+                        }
 
-            mostrar_foto(foto)
+                        salvar_usuario(usuario, id_usuario, dados_usuario)
+                        atualizar_msg(f"Usuário {id_usuario} cadastrado com sucesso.")
+
+                for deteccao in resultado.detections:
+                    mp_drawing.draw_detection(foto, deteccao)
+
+                mostrar_foto(foto)
 
         except ValueError as ve:
             atualizar_msg(f"Erro: {str(ve)}")
