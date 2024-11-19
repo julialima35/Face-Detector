@@ -36,6 +36,20 @@ def mostrar_foto(foto):
 def atualizar_msg(msg):
     lbl_msg.config(text=msg)
 
+def exibir_formulario(nome_usuario):
+    """Exibe o formulário de cadastro se o usuário não estiver cadastrado."""
+    if not frm_cadastro.winfo_ismapped():
+        frm_cadastro.pack(pady=20)
+
+    lbl_nome.config(text=f"Nome (Usuário: {nome_usuario})")
+    ent_nome.delete(0, tk.END)
+    ent_email.delete(0, tk.END)
+    ent_telefone.delete(0, tk.END)
+
+def esconder_formulario():
+    """Esconde o formulário de cadastro após completar o cadastro."""
+    frm_cadastro.pack_forget()
+
 def cadastrar_usuario(foto, deteccao, idx):
     bboxC = deteccao.location_data.relative_bounding_box
     h, w, _ = foto.shape
@@ -47,10 +61,18 @@ def cadastrar_usuario(foto, deteccao, idx):
     banco = carregar_banco()
     if id_usuario in banco:
         atualizar_msg(f"Usuário {id_usuario} já cadastrado.")
-    else:
-        nome = simpledialog.askstring("Nome", "Digite o nome do usuário:")
-        email = simpledialog.askstring("E-mail", "Digite o e-mail do usuário:")
-        telefone = simpledialog.askstring("Telefone", "Digite o telefone do usuário:")
+        mostrar_foto(foto)
+        return
+
+    atualizar_msg(f"Cadastro do usuário {id_usuario}")
+    exibir_formulario(id_usuario)
+
+    def completar_cadastro():
+        """Completa o cadastro após preencher o formulário."""
+        nome = ent_nome.get()
+        email = ent_email.get()
+        telefone = ent_telefone.get()
+
         dados_usuario = {"nome": nome, "email": email, "telefone": telefone}
 
         caminho_foto = os.path.join(pasta_usuarios, f'{id_usuario}.jpg')
@@ -58,6 +80,10 @@ def cadastrar_usuario(foto, deteccao, idx):
         banco[id_usuario] = {"foto": caminho_foto, "dados": dados_usuario}
         salvar_banco(banco)
         atualizar_msg(f"Usuário {id_usuario} cadastrado com sucesso.")
+        esconder_formulario()
+        mostrar_foto(foto)
+
+    btn_confirmar.config(command=completar_cadastro)
 
 def processar_foto(foto):
     with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
@@ -132,5 +158,24 @@ lbl_msg.pack(pady=10)
 
 lbl_foto = tk.Label(app, bg="#f5f5f5")
 lbl_foto.pack(pady=20)
+
+frm_cadastro = tk.Frame(app, bg="#f5f5f5")
+lbl_nome = tk.Label(frm_cadastro, text="Nome", font=("Arial", 12), bg="#f5f5f5")
+lbl_nome.grid(row=0, column=0, padx=10, pady=5)
+ent_nome = tk.Entry(frm_cadastro, font=("Arial", 12))
+ent_nome.grid(row=0, column=1, padx=10, pady=5)
+
+lbl_email = tk.Label(frm_cadastro, text="E-mail", font=("Arial", 12), bg="#f5f5f5")
+lbl_email.grid(row=1, column=0, padx=10, pady=5)
+ent_email = tk.Entry(frm_cadastro, font=("Arial", 12))
+ent_email.grid(row=1, column=1, padx=10, pady=5)
+
+lbl_telefone = tk.Label(frm_cadastro, text="Telefone", font=("Arial", 12), bg="#f5f5f5")
+lbl_telefone.grid(row=2, column=0, padx=10, pady=5)
+ent_telefone = tk.Entry(frm_cadastro, font=("Arial", 12))
+ent_telefone.grid(row=2, column=1, padx=10, pady=5)
+
+btn_confirmar = tk.Button(frm_cadastro, text="Confirmar Cadastro", font=("Arial", 12), bg="#4CAF50", fg="white", relief="raised", bd=5)
+btn_confirmar.grid(row=3, column=0, columnspan=2, pady=10)
 
 app.mainloop()
