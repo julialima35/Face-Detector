@@ -1,17 +1,16 @@
 import cv2
 import os
 import tkinter as tk
-from tkinter import filedialog, simpledialog
+from tkinter import filedialog
 from PIL import Image, ImageTk
 import pickle
 import mediapipe as mp
 
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
-pasta_usuarios = 'usuarios'
+usuarios_dir = 'usuarios'
 
-if not os.path.exists(pasta_usuarios):
-    os.makedirs(pasta_usuarios)
+os.makedirs(usuarios_dir, exist_ok=True)
 
 def carregar_banco():
     if os.path.exists('banco_usuarios.pkl'):
@@ -23,7 +22,10 @@ def salvar_banco(banco):
     with open('banco_usuarios.pkl', 'wb') as f:
         pickle.dump(banco, f)
 
-def mostrar_foto(foto):
+def atualizar_msg(msg):
+    lbl_msg.config(text=msg)
+
+def exibir_foto(foto):
     altura_max, largura_max = 400, 400
     altura, largura = foto.shape[:2]
     proporcao = min(largura_max / largura, altura_max / altura)
@@ -33,21 +35,14 @@ def mostrar_foto(foto):
     lbl_foto.config(image=foto_tk)
     lbl_foto.image = foto_tk
 
-def atualizar_msg(msg):
-    lbl_msg.config(text=msg)
-
 def exibir_formulario(nome_usuario):
-    """Exibe o formulário de cadastro se o usuário não estiver cadastrado."""
-    if not frm_cadastro.winfo_ismapped():
-        frm_cadastro.pack(pady=20)
-
+    frm_cadastro.pack(pady=20)
     lbl_nome.config(text=f"Nome (Usuário: {nome_usuario})")
     ent_nome.delete(0, tk.END)
     ent_email.delete(0, tk.END)
     ent_telefone.delete(0, tk.END)
 
 def esconder_formulario():
-    """Esconde o formulário de cadastro após completar o cadastro."""
     frm_cadastro.pack_forget()
 
 def cadastrar_usuario(foto, deteccao, idx):
@@ -60,28 +55,37 @@ def cadastrar_usuario(foto, deteccao, idx):
 
     banco = carregar_banco()
     if id_usuario in banco:
-        atualizar_msg(f"Usuário {id_usuario} já cadastrado.")
-        mostrar_foto(foto)
+        dados = banco[id_usuario]["dados"]
+        atualizar_msg(f"Usuário {id_usuario} já cadastrado. Dados exibidos abaixo:")
+        exibir_foto(foto)
+
+        ent_nome.delete(0, tk.END)
+        ent_nome.insert(0, dados["nome"])
+        ent_email.delete(0, tk.END)
+        ent_email.insert(0, dados["email"])
+        ent_telefone.delete(0, tk.END)
+        ent_telefone.insert(0, dados["telefone"])
+        
+        frm_cadastro.pack(pady=20) 
         return
+
 
     atualizar_msg(f"Cadastro do usuário {id_usuario}")
     exibir_formulario(id_usuario)
 
     def completar_cadastro():
-        """Completa o cadastro após preencher o formulário."""
         nome = ent_nome.get()
         email = ent_email.get()
         telefone = ent_telefone.get()
 
         dados_usuario = {"nome": nome, "email": email, "telefone": telefone}
-
-        caminho_foto = os.path.join(pasta_usuarios, f'{id_usuario}.jpg')
+        caminho_foto = os.path.join(usuarios_dir, f'{id_usuario}.jpg')
         cv2.imwrite(caminho_foto, usuario)
         banco[id_usuario] = {"foto": caminho_foto, "dados": dados_usuario}
         salvar_banco(banco)
         atualizar_msg(f"Usuário {id_usuario} cadastrado com sucesso.")
         esconder_formulario()
-        mostrar_foto(foto)
+        exibir_foto(foto)
 
     btn_confirmar.config(command=completar_cadastro)
 
@@ -96,7 +100,7 @@ def processar_foto(foto):
         for idx, deteccao in enumerate(resultado.detections):
             cadastrar_usuario(foto, deteccao, idx)
             mp_drawing.draw_detection(foto, deteccao)
-        mostrar_foto(foto)
+        exibir_foto(foto)
 
 def escolher_foto():
     caminho = filedialog.askopenfilename(title="Selecione uma foto", filetypes=[("Imagens", "*.jpg;*.jpeg;*.png")])
@@ -110,11 +114,11 @@ def escolher_foto():
         except Exception as e:
             atualizar_msg(f"Erro ao processar a foto: {str(e)}")
 
-def capturar_foto_com_webcam_local():
+def capturar_foto_com_webcam():
     try:
-        captura = cv2.VideoCapture(0)  # Usando o índice 0 para a câmera local
+        captura = cv2.VideoCapture(0)
         if not captura.isOpened():
-            atualizar_msg("Não foi possível acessar a câmera local.")
+            atualizar_msg("Não foi possível acessar a câmera.")
             return
 
         atualizar_msg("Pressione 'Espaço' para capturar a foto ou 'Esc' para sair.")
@@ -126,15 +130,15 @@ def capturar_foto_com_webcam_local():
 
             cv2.imshow("Captura de Foto - Pressione 'Espaço' para capturar", frame)
             key = cv2.waitKey(1)
-            if key == 27:  # Pressione 'Esc' para sair
+            if key == 27: 
                 break
-            elif key == 32:  # Pressione 'Espaço' para capturar a foto
+            elif key == 32: 
                 captura.release()
                 cv2.destroyAllWindows()
                 processar_foto(frame)
                 break
     except Exception as e:
-        atualizar_msg(f"Erro ao acessar a câmera local: {str(e)}")
+        atualizar_msg(f"Erro ao acessar a câmera: {str(e)}")
 
 
 app = tk.Tk()
@@ -145,13 +149,13 @@ app.config(bg="#f5f5f5")
 lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
 lbl_titulo.pack(pady=10)
 
-lbl_instr = tk.Label(app, text="Escolha uma foto ou use a câmera para detectar usuários", font=("Arial", 12), bg="#f5f5f5")
+lbl_instr = tk.Label(app, text="Escolha uma foto ou use a câmera", font=("Arial", 12), bg="#f5f5f5")
 lbl_instr.pack(pady=5)
 
 btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
 btn_escolher.pack(pady=20)
 
-btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam_local, bg="#FFC107", fg="black", font=("Arial", 14, "bold"), relief="raised", bd=5)
+btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 14, "bold"), relief="raised", bd=5)
 btn_capturar_ip.pack(pady=20)
 
 lbl_msg = tk.Label(app, text="", font=("Arial", 12), bg="#f5f5f5", fg="blue")
