@@ -55,9 +55,20 @@ def cadastrar_usuario(foto, deteccao, idx):
 
     banco = carregar_banco()
     if id_usuario in banco:
-        atualizar_msg(f"Usuário {id_usuario} já cadastrado.")
+        dados = banco[id_usuario]["dados"]
+        atualizar_msg(f"Usuário {id_usuario} já cadastrado. Dados exibidos abaixo:")
         exibir_foto(foto)
+
+        ent_nome.delete(0, tk.END)
+        ent_nome.insert(0, dados["nome"])
+        ent_email.delete(0, tk.END)
+        ent_email.insert(0, dados["email"])
+        ent_telefone.delete(0, tk.END)
+        ent_telefone.insert(0, dados["telefone"])
+        
+        frm_cadastro.pack(pady=20) 
         return
+
 
     atualizar_msg(f"Cadastro do usuário {id_usuario}")
     exibir_formulario(id_usuario)
