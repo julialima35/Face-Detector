@@ -56,29 +56,23 @@ def cadastrar_usuario(foto, deteccao, idx):
     banco = carregar_banco()
     if id_usuario in banco:
         dados = banco[id_usuario]["dados"]
-        atualizar_msg(f"Usuário {id_usuario} já cadastrado. Dados exibidos abaixo:")
+        atualizar_msg(f"Usuário {id_usuario} já cadastrado.")
         exibir_foto(foto)
-
-        ent_nome.delete(0, tk.END)
         ent_nome.insert(0, dados["nome"])
-        ent_email.delete(0, tk.END)
         ent_email.insert(0, dados["email"])
-        ent_telefone.delete(0, tk.END)
         ent_telefone.insert(0, dados["telefone"])
-        
         frm_cadastro.pack(pady=20) 
         return
-
 
     atualizar_msg(f"Cadastro do usuário {id_usuario}")
     exibir_formulario(id_usuario)
 
     def completar_cadastro():
-        nome = ent_nome.get()
-        email = ent_email.get()
-        telefone = ent_telefone.get()
-
-        dados_usuario = {"nome": nome, "email": email, "telefone": telefone}
+        dados_usuario = {
+            "nome": ent_nome.get(),
+            "email": ent_email.get(),
+            "telefone": ent_telefone.get()
+        }
         caminho_foto = os.path.join(usuarios_dir, f'{id_usuario}.jpg')
         cv2.imwrite(caminho_foto, usuario)
         banco[id_usuario] = {"foto": caminho_foto, "dados": dados_usuario}
@@ -128,7 +122,7 @@ def capturar_foto_com_webcam():
                 atualizar_msg("Erro ao capturar a imagem.")
                 break
 
-            cv2.imshow("Captura de Foto - Pressione 'Espaço' para capturar", frame)
+            cv2.imshow("Captura de Foto", frame)
             key = cv2.waitKey(1)
             if key == 27: 
                 break
@@ -140,7 +134,6 @@ def capturar_foto_com_webcam():
     except Exception as e:
         atualizar_msg(f"Erro ao acessar a câmera: {str(e)}")
 
-
 app = tk.Tk()
 app.title("Detector de Usuários")
 app.geometry("450x600")
@@ -148,9 +141,6 @@ app.config(bg="#f5f5f5")
 
 lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
 lbl_titulo.pack(pady=10)
-
-lbl_instr = tk.Label(app, text="Escolha uma foto ou use a câmera", font=("Arial", 12), bg="#f5f5f5")
-lbl_instr.pack(pady=5)
 
 btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
 btn_escolher.pack(pady=20)
