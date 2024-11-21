@@ -110,11 +110,11 @@ def escolher_foto():
         except Exception as e:
             atualizar_msg(f"Erro ao processar a foto: {str(e)}")
 
-def capturar_foto_ip_webcam():
+def capturar_foto_com_webcam_local():
     try:
-        captura = cv2.VideoCapture("http://192.168.1.35:8080/video")
+        captura = cv2.VideoCapture(0)  # Usando o índice 0 para a câmera local
         if not captura.isOpened():
-            atualizar_msg("Não foi possível acessar o IP Webcam.")
+            atualizar_msg("Não foi possível acessar a câmera local.")
             return
 
         atualizar_msg("Pressione 'Espaço' para capturar a foto ou 'Esc' para sair.")
@@ -126,15 +126,16 @@ def capturar_foto_ip_webcam():
 
             cv2.imshow("Captura de Foto - Pressione 'Espaço' para capturar", frame)
             key = cv2.waitKey(1)
-            if key == 27: 
+            if key == 27:  # Pressione 'Esc' para sair
                 break
-            elif key == 32: 
+            elif key == 32:  # Pressione 'Espaço' para capturar a foto
                 captura.release()
                 cv2.destroyAllWindows()
                 processar_foto(frame)
                 break
     except Exception as e:
-        atualizar_msg(f"Erro ao acessar o IP Webcam: {str(e)}")
+        atualizar_msg(f"Erro ao acessar a câmera local: {str(e)}")
+
 
 app = tk.Tk()
 app.title("Detector de Usuários")
@@ -150,7 +151,7 @@ lbl_instr.pack(pady=5)
 btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
 btn_escolher.pack(pady=20)
 
-btn_capturar_ip = tk.Button(app, text="Capturar Foto com IP Webcam", command=capturar_foto_ip_webcam, bg="#FFC107", fg="black", font=("Arial", 14, "bold"), relief="raised", bd=5)
+btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam_local, bg="#FFC107", fg="black", font=("Arial", 14, "bold"), relief="raised", bd=5)
 btn_capturar_ip.pack(pady=20)
 
 lbl_msg = tk.Label(app, text="", font=("Arial", 12), bg="#f5f5f5", fg="blue")
