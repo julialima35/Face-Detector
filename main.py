@@ -1,7 +1,7 @@
 import cv2
 import os
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, Toplevel
 from PIL import Image, ImageTk
 import pickle
 import mediapipe as mp
@@ -134,6 +134,38 @@ def capturar_foto_com_webcam():
     except Exception as e:
         atualizar_msg(f"Erro ao acessar a câmera: {str(e)}")
 
+def visualizar_banco():
+    banco = carregar_banco()
+
+    janela_banco = Toplevel()
+    janela_banco.title("Banco de Dados de Usuários")
+    janela_banco.geometry("500x600")
+
+    lbl_titulo_banco = tk.Label(janela_banco, text="Usuários Cadastrados", font=("Arial", 16, "bold"))
+    lbl_titulo_banco.pack(pady=10)
+
+    for id_usuario, info in banco.items():
+        usuario = info["dados"]
+        foto_path = info["foto"]
+        foto_usuario = cv2.imread(foto_path)
+        altura_max, largura_max = 100, 100
+        altura, largura = foto_usuario.shape[:2]
+        proporcao = min(largura_max / largura, altura_max / altura)
+        nova_largura, nova_altura = int(largura * proporcao), int(altura * proporcao)
+        foto_usuario_resized = cv2.cvtColor(cv2.resize(foto_usuario, (nova_largura, nova_altura)), cv2.COLOR_BGR2RGB)
+        foto_usuario_tk = ImageTk.PhotoImage(image=Image.fromarray(foto_usuario_resized))
+
+        frame_usuario = tk.Frame(janela_banco)
+        frame_usuario.pack(pady=10)
+
+        lbl_foto_usuario = tk.Label(frame_usuario, image=foto_usuario_tk)
+        lbl_foto_usuario.image = foto_usuario_tk
+        lbl_foto_usuario.grid(row=0, column=0, padx=10)
+
+        lbl_info_usuario = tk.Label(frame_usuario, text=f"Nome: {usuario['nome']}\nE-mail: {usuario['email']}\nTelefone: {usuario['telefone']}",
+                                    font=("Arial", 12))
+        lbl_info_usuario.grid(row=0, column=1, padx=10)
+
 app = tk.Tk()
 app.title("Detector de Usuários")
 app.geometry("450x600")
@@ -147,6 +179,9 @@ btn_escolher.pack(pady=20)
 
 btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 14, "bold"), relief="raised", bd=5)
 btn_capturar_ip.pack(pady=20)
+
+btn_ver_banco = tk.Button(app, text="Ver Banco de Dados", command=visualizar_banco, bg="#2196F3", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
+btn_ver_banco.pack(pady=20)
 
 lbl_msg = tk.Label(app, text="", font=("Arial", 12), bg="#f5f5f5", fg="blue")
 lbl_msg.pack(pady=10)
