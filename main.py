@@ -61,7 +61,7 @@ def cadastrar_usuario(foto, deteccao, idx):
         ent_nome.insert(0, dados["nome"])
         ent_email.insert(0, dados["email"])
         ent_telefone.insert(0, dados["telefone"])
-        frm_cadastro.pack(pady=20) 
+        exibir_formulario(id_usuario)
         return
 
     atualizar_msg(f"Cadastro do usuário {id_usuario}")
@@ -136,7 +136,6 @@ def capturar_foto_com_webcam():
 
 def visualizar_banco():
     banco = carregar_banco()
-
     janela_banco = Toplevel()
     janela_banco.title("Banco de Dados de Usuários")
     janela_banco.geometry("500x600")
