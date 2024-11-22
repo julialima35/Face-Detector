@@ -74,14 +74,23 @@ def cadastrar_usuario(foto, deteccao, idx):
             "telefone": ent_telefone.get()
         }
         caminho_foto = os.path.join(usuarios_dir, f'{id_usuario}.jpg')
-        cv2.imwrite(caminho_foto, usuario)
-        banco[id_usuario] = {"foto": caminho_foto, "dados": dados_usuario}
+        caminho_foto_original = os.path.join(usuarios_dir, f'{id_usuario}_original.jpg')
+
+        cv2.imwrite(caminho_foto, usuario) 
+        cv2.imwrite(caminho_foto_original, foto) 
+
+        banco[id_usuario] = {
+            "foto": caminho_foto,
+            "foto_original": caminho_foto_original,
+            "dados": dados_usuario
+        }
         salvar_banco(banco)
         atualizar_msg(f"Usuário {id_usuario} cadastrado com sucesso.")
         esconder_formulario()
         exibir_foto(foto)
 
     btn_confirmar.config(command=completar_cadastro)
+
 
 def processar_foto(foto):
     with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
@@ -145,8 +154,9 @@ def visualizar_banco():
 
     for id_usuario, info in banco.items():
         usuario = info["dados"]
-        foto_path = info["foto"]
+        foto_path = info["foto_original"]  
         foto_usuario = cv2.imread(foto_path)
+
         altura_max, largura_max = 100, 100
         altura, largura = foto_usuario.shape[:2]
         proporcao = min(largura_max / largura, altura_max / altura)
@@ -164,6 +174,7 @@ def visualizar_banco():
         lbl_info_usuario = tk.Label(frame_usuario, text=f"Nome: {usuario['nome']}\nE-mail: {usuario['email']}\nTelefone: {usuario['telefone']}",
                                     font=("Arial", 12))
         lbl_info_usuario.grid(row=0, column=1, padx=10)
+
 
 app = tk.Tk()
 app.title("Detector de Usuários")
