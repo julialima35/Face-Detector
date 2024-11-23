@@ -25,13 +25,13 @@ def atualizar_msg(msg):
     lbl_msg.config(text=msg)
 
 def exibir_foto(foto):
-    altura_max, largura_max = 400, 400
-    proporcao = min(largura_max / foto.shape[1], altura_max / foto.shape[0])
-    nova_largura, nova_altura = int(foto.shape[1] * proporcao), int(foto.shape[0] * proporcao)
-    foto_rgb = cv2.cvtColor(cv2.resize(foto, (nova_largura, nova_altura)), cv2.COLOR_BGR2RGB)
+    largura_max = app.winfo_screenwidth() 
+    altura_max = int(foto.shape[0] * (largura_max / foto.shape[1]))  
+    foto_rgb = cv2.cvtColor(cv2.resize(foto, (largura_max, altura_max)), cv2.COLOR_BGR2RGB)
     foto_tk = ImageTk.PhotoImage(image=Image.fromarray(foto_rgb))
     lbl_foto.config(image=foto_tk)
     lbl_foto.image = foto_tk
+
 
 def exibir_formulario(nome_usuario):
     frm_cadastro.pack(pady=20)
@@ -156,7 +156,7 @@ def visualizar_banco():
 
 app = tk.Tk()
 app.title("Detector de Usuários")
-app.geometry("450x600")
+app.geometry(f"{app.winfo_screenwidth()}x{app.winfo_screenheight()}") 
 app.config(bg="#f5f5f5")
 
 lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
