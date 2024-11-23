@@ -9,7 +9,6 @@ import mediapipe as mp
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 usuarios_dir = 'usuarios'
-
 os.makedirs(usuarios_dir, exist_ok=True)
 
 def carregar_banco():
@@ -27,9 +26,8 @@ def atualizar_msg(msg):
 
 def exibir_foto(foto):
     altura_max, largura_max = 400, 400
-    altura, largura = foto.shape[:2]
-    proporcao = min(largura_max / largura, altura_max / altura)
-    nova_largura, nova_altura = int(largura * proporcao), int(altura * proporcao)
+    proporcao = min(largura_max / foto.shape[1], altura_max / foto.shape[0])
+    nova_largura, nova_altura = int(foto.shape[1] * proporcao), int(foto.shape[0] * proporcao)
     foto_rgb = cv2.cvtColor(cv2.resize(foto, (nova_largura, nova_altura)), cv2.COLOR_BGR2RGB)
     foto_tk = ImageTk.PhotoImage(image=Image.fromarray(foto_rgb))
     lbl_foto.config(image=foto_tk)
@@ -38,9 +36,8 @@ def exibir_foto(foto):
 def exibir_formulario(nome_usuario):
     frm_cadastro.pack(pady=20)
     lbl_nome.config(text=f"Nome (Usuário: {nome_usuario})")
-    ent_nome.delete(0, tk.END)
-    ent_email.delete(0, tk.END)
-    ent_telefone.delete(0, tk.END)
+    for campo in [ent_nome, ent_email, ent_telefone]:
+        campo.delete(0, tk.END)
 
 def esconder_formulario():
     frm_cadastro.pack_forget()
@@ -48,8 +45,7 @@ def esconder_formulario():
 def cadastrar_usuario(foto, deteccao, idx):
     bboxC = deteccao.location_data.relative_bounding_box
     h, w, _ = foto.shape
-    x, y, w_box, h_box = (int(bboxC.xmin * w), int(bboxC.ymin * h),
-                          int(bboxC.width * w), int(bboxC.height * h))
+    x, y, w_box, h_box = (int(bboxC.xmin * w), int(bboxC.ymin * h), int(bboxC.width * w), int(bboxC.height * h))
     usuario = foto[y:y + h_box, x:x + w_box]
     id_usuario = f'usuario_{idx}'
 
@@ -58,9 +54,8 @@ def cadastrar_usuario(foto, deteccao, idx):
         dados = banco[id_usuario]["dados"]
         atualizar_msg(f"Usuário {id_usuario} já cadastrado.")
         exibir_foto(foto)
-        ent_nome.insert(0, dados["nome"])
-        ent_email.insert(0, dados["email"])
-        ent_telefone.insert(0, dados["telefone"])
+        for campo, valor in zip([ent_nome, ent_email, ent_telefone], [dados["nome"], dados["email"], dados["telefone"]]):
+            campo.insert(0, valor)
         exibir_formulario(id_usuario)
         return
 
@@ -68,22 +63,12 @@ def cadastrar_usuario(foto, deteccao, idx):
     exibir_formulario(id_usuario)
 
     def completar_cadastro():
-        dados_usuario = {
-            "nome": ent_nome.get(),
-            "email": ent_email.get(),
-            "telefone": ent_telefone.get()
-        }
+        dados_usuario = { "nome": ent_nome.get(), "email": ent_email.get(), "telefone": ent_telefone.get() }
         caminho_foto = os.path.join(usuarios_dir, f'{id_usuario}.jpg')
         caminho_foto_original = os.path.join(usuarios_dir, f'{id_usuario}_original.jpg')
-
-        cv2.imwrite(caminho_foto, usuario) 
-        cv2.imwrite(caminho_foto_original, foto) 
-
-        banco[id_usuario] = {
-            "foto": caminho_foto,
-            "foto_original": caminho_foto_original,
-            "dados": dados_usuario
-        }
+        cv2.imwrite(caminho_foto, usuario)
+        cv2.imwrite(caminho_foto_original, foto)
+        banco[id_usuario] = { "foto": caminho_foto, "foto_original": caminho_foto_original, "dados": dados_usuario }
         salvar_banco(banco)
         atualizar_msg(f"Usuário {id_usuario} cadastrado com sucesso.")
         esconder_formulario()
@@ -91,15 +76,13 @@ def cadastrar_usuario(foto, deteccao, idx):
 
     btn_confirmar.config(command=completar_cadastro)
 
-
 def processar_foto(foto):
-    with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
+    with mp_face_detection.FaceDetection(min_detection_confidence=0.5) as face_detection:
         foto_rgb = cv2.cvtColor(foto, cv2.COLOR_BGR2RGB)
         resultado = face_detection.process(foto_rgb)
         if not resultado.detections:
             atualizar_msg("Nenhum rosto detectado.")
             return
-
         for idx, deteccao in enumerate(resultado.detections):
             cadastrar_usuario(foto, deteccao, idx)
             mp_drawing.draw_detection(foto, deteccao)
@@ -154,13 +137,9 @@ def visualizar_banco():
 
     for id_usuario, info in banco.items():
         usuario = info["dados"]
-        foto_path = info["foto_original"]  
-        foto_usuario = cv2.imread(foto_path)
-
-        altura_max, largura_max = 100, 100
-        altura, largura = foto_usuario.shape[:2]
-        proporcao = min(largura_max / largura, altura_max / altura)
-        nova_largura, nova_altura = int(largura * proporcao), int(altura * proporcao)
+        foto_usuario = cv2.imread(info["foto_original"])
+        proporcao = min(100 / foto_usuario.shape[1], 100 / foto_usuario.shape[0])
+        nova_largura, nova_altura = int(foto_usuario.shape[1] * proporcao), int(foto_usuario.shape[0] * proporcao)
         foto_usuario_resized = cv2.cvtColor(cv2.resize(foto_usuario, (nova_largura, nova_altura)), cv2.COLOR_BGR2RGB)
         foto_usuario_tk = ImageTk.PhotoImage(image=Image.fromarray(foto_usuario_resized))
 
@@ -175,7 +154,6 @@ def visualizar_banco():
                                     font=("Arial", 12))
         lbl_info_usuario.grid(row=0, column=1, padx=10)
 
-
 app = tk.Tk()
 app.title("Detector de Usuários")
 app.geometry("450x600")
@@ -184,13 +162,13 @@ app.config(bg="#f5f5f5")
 lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
 lbl_titulo.pack(pady=10)
 
-btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
+btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 14, "bold"))
 btn_escolher.pack(pady=20)
 
-btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 14, "bold"), relief="raised", bd=5)
+btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 14, "bold"))
 btn_capturar_ip.pack(pady=20)
 
-btn_ver_banco = tk.Button(app, text="Ver Banco de Dados", command=visualizar_banco, bg="#2196F3", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
+btn_ver_banco = tk.Button(app, text="Ver Banco de Dados", command=visualizar_banco, bg="#2196F3", fg="white", font=("Arial", 14, "bold"))
 btn_ver_banco.pack(pady=20)
 
 lbl_msg = tk.Label(app, text="", font=("Arial", 12), bg="#f5f5f5", fg="blue")
@@ -215,7 +193,7 @@ lbl_telefone.grid(row=2, column=0, padx=10, pady=5)
 ent_telefone = tk.Entry(frm_cadastro, font=("Arial", 12))
 ent_telefone.grid(row=2, column=1, padx=10, pady=5)
 
-btn_confirmar = tk.Button(frm_cadastro, text="Confirmar Cadastro", font=("Arial", 12), bg="#4CAF50", fg="white", relief="raised", bd=5)
+btn_confirmar = tk.Button(frm_cadastro, text="Confirmar Cadastro", font=("Arial", 12), bg="#4CAF50", fg="white")
 btn_confirmar.grid(row=3, column=0, columnspan=2, pady=10)
 
 app.mainloop()
