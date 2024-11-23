@@ -40,7 +40,7 @@ def exibir_foto(foto):
     
     lbl_foto.config(image=foto_tk)
     lbl_foto.image = foto_tk
-    
+
 
 def exibir_formulario(nome_usuario):
     frm_cadastro.pack(pady=20)
@@ -165,8 +165,9 @@ def visualizar_banco():
 
 app = tk.Tk()
 app.title("Detector de Usuários")
-app.geometry(f"{app.winfo_screenwidth()}x{app.winfo_screenheight()}") 
+app.state('zoomed')
 app.config(bg="#f5f5f5")
+
 
 lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
 lbl_titulo.pack(pady=10)
