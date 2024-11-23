@@ -26,12 +26,21 @@ def atualizar_msg(msg):
 
 def exibir_foto(foto):
     largura_max = app.winfo_screenwidth() 
-    altura_max = int(foto.shape[0] * (largura_max / foto.shape[1]))  
-    foto_rgb = cv2.cvtColor(cv2.resize(foto, (largura_max, altura_max)), cv2.COLOR_BGR2RGB)
+    altura_max = app.winfo_screenheight()  
+    
+    altura_imagem, largura_imagem, _ = foto.shape
+    proporcao = min(largura_max / largura_imagem, altura_max / altura_imagem)
+    
+    nova_largura = int(largura_imagem * proporcao)
+    nova_altura = int(altura_imagem * proporcao)
+    
+    foto_redimensionada = cv2.resize(foto, (nova_largura, nova_altura))
+    foto_rgb = cv2.cvtColor(foto_redimensionada, cv2.COLOR_BGR2RGB)
     foto_tk = ImageTk.PhotoImage(image=Image.fromarray(foto_rgb))
+    
     lbl_foto.config(image=foto_tk)
     lbl_foto.image = foto_tk
-
+    
 
 def exibir_formulario(nome_usuario):
     frm_cadastro.pack(pady=20)
