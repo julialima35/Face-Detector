@@ -93,7 +93,13 @@ def processar_foto(foto):
             atualizar_msg("Nenhum rosto detectado.")
             return
         for idx, deteccao in enumerate(resultado.detections):
-            cadastrar_usuario(foto, deteccao, idx)
+            banco = carregar_banco()
+            id_usuario = f'usuario_{idx}'
+
+            if id_usuario not in banco:  
+                cadastrar_usuario(foto, deteccao, idx)
+                return
+
             mp_drawing.draw_detection(foto, deteccao)
         exibir_foto(foto)
 
