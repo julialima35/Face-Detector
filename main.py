@@ -25,14 +25,10 @@ def atualizar_msg(msg):
     lbl_msg.config(text=msg)
 
 def exibir_foto(foto):
-    largura_max = app.winfo_screenwidth() 
-    altura_max = app.winfo_screenheight()  
-    
+    altura_max, largura_max = app.winfo_screenheight(), app.winfo_screenwidth()  
     altura_imagem, largura_imagem, _ = foto.shape
     proporcao = min(largura_max / largura_imagem, altura_max / altura_imagem)
-    
-    nova_largura = int(largura_imagem * proporcao)
-    nova_altura = int(altura_imagem * proporcao)
+    nova_largura, nova_altura = int(largura_imagem * proporcao), int(altura_imagem * proporcao)
     
     foto_redimensionada = cv2.resize(foto, (nova_largura, nova_altura))
     foto_rgb = cv2.cvtColor(foto_redimensionada, cv2.COLOR_BGR2RGB)
@@ -40,7 +36,6 @@ def exibir_foto(foto):
     
     lbl_foto.config(image=foto_tk)
     lbl_foto.image = foto_tk
-
 
 def exibir_formulario(nome_usuario):
     frm_cadastro.pack(pady=20)
@@ -173,7 +168,6 @@ app = tk.Tk()
 app.title("Detector de Usuários")
 app.state('zoomed')
 app.config(bg="#f5f5f5")
-
 
 lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
 lbl_titulo.pack(pady=10)
