@@ -1,7 +1,7 @@
 import cv2
 import os
 import tkinter as tk
-from tkinter import filedialog, Toplevel
+from tkinter import filedialog, Toplevel, messagebox
 from PIL import Image, ImageTk
 import pickle
 import mediapipe as mp
@@ -136,6 +136,43 @@ def capturar_foto_com_webcam():
     except Exception as e:
         atualizar_msg(f"Erro ao acessar a câmera: {str(e)}")
 
+def editar_usuario(banco, id_usuario):
+    def salvar_edicao():
+        dados_usuario = { "nome": ent_nome.get(), "email": ent_email.get(), "telefone": ent_telefone.get() }
+        banco[id_usuario]["dados"] = dados_usuario
+        salvar_banco(banco)
+        atualizar_msg(f"Usuário {id_usuario} atualizado.")
+        janela_edicao.destroy()
+
+    dados = banco[id_usuario]["dados"]
+    janela_edicao = Toplevel()
+    janela_edicao.title(f"Editar {id_usuario}")
+    
+    tk.Label(janela_edicao, text="Nome").pack(pady=5)
+    ent_nome = tk.Entry(janela_edicao)
+    ent_nome.insert(0, dados["nome"])
+    ent_nome.pack(pady=5)
+
+    tk.Label(janela_edicao, text="E-mail").pack(pady=5)
+    ent_email = tk.Entry(janela_edicao)
+    ent_email.insert(0, dados["email"])
+    ent_email.pack(pady=5)
+
+    tk.Label(janela_edicao, text="Telefone").pack(pady=5)
+    ent_telefone = tk.Entry(janela_edicao)
+    ent_telefone.insert(0, dados["telefone"])
+    ent_telefone.pack(pady=5)
+
+    btn_salvar = tk.Button(janela_edicao, text="Salvar", command=salvar_edicao)
+    btn_salvar.pack(pady=10)
+
+def remover_usuario(banco, id_usuario):
+    resposta = messagebox.askyesno("Confirmar", f"Você tem certeza que deseja remover o usuário {id_usuario}?")
+    if resposta:
+        del banco[id_usuario]
+        salvar_banco(banco)
+        atualizar_msg(f"Usuário {id_usuario} removido.")
+
 def visualizar_banco():
     banco = carregar_banco()
     janela_banco = Toplevel()
@@ -163,6 +200,12 @@ def visualizar_banco():
         lbl_info_usuario = tk.Label(frame_usuario, text=f"Nome: {usuario['nome']}\nE-mail: {usuario['email']}\nTelefone: {usuario['telefone']}",
                                     font=("Arial", 12))
         lbl_info_usuario.grid(row=0, column=1, padx=10)
+
+        btn_editar = tk.Button(frame_usuario, text="Editar", command=lambda id_usuario=id_usuario: editar_usuario(banco, id_usuario))
+        btn_editar.grid(row=0, column=2, padx=10)
+
+        btn_remover = tk.Button(frame_usuario, text="Remover", command=lambda id_usuario=id_usuario: remover_usuario(banco, id_usuario))
+        btn_remover.grid(row=0, column=3, padx=10)
 
 app = tk.Tk()
 app.title("Detector de Usuários")
