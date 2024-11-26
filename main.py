@@ -7,245 +7,112 @@ import pickle
 import mediapipe as mp
 
 mp_face_detection = mp.solutions.face_detection
-mp_drawing = mp.solutions.drawing_utils
 usuarios_dir = 'usuarios'
 os.makedirs(usuarios_dir, exist_ok=True)
 
 def carregar_banco():
-    if os.path.exists('banco_usuarios.pkl'):
-        with open('banco_usuarios.pkl', 'rb') as f:
-            return pickle.load(f)
-    return {}
+    return pickle.load(open('banco_usuarios.pkl', 'rb')) if os.path.exists('banco_usuarios.pkl') else {}
 
 def salvar_banco(banco):
-    with open('banco_usuarios.pkl', 'wb') as f:
-        pickle.dump(banco, f)
+    pickle.dump(banco, open('banco_usuarios.pkl', 'wb'))
 
 def atualizar_msg(msg):
     lbl_msg.config(text=msg)
 
 def exibir_foto(foto):
-    altura_max, largura_max = app.winfo_screenheight(), app.winfo_screenwidth()  
-    altura_imagem, largura_imagem, _ = foto.shape
-    proporcao = min(largura_max / largura_imagem, altura_max / altura_imagem)
-    nova_largura, nova_altura = int(largura_imagem * proporcao), int(altura_imagem * proporcao)
-    
-    foto_redimensionada = cv2.resize(foto, (nova_largura, nova_altura))
-    foto_rgb = cv2.cvtColor(foto_redimensionada, cv2.COLOR_BGR2RGB)
+    h_max, w_max = app.winfo_screenheight(), app.winfo_screenwidth()
+    h_img, w_img, _ = foto.shape
+    proporcao = min(w_max / w_img, h_max / h_img)
+    foto_resized = cv2.resize(foto, (int(w_img * proporcao), int(h_img * proporcao)))
+    foto_rgb = cv2.cvtColor(foto_resized, cv2.COLOR_BGR2RGB)
     foto_tk = ImageTk.PhotoImage(image=Image.fromarray(foto_rgb))
-    
     lbl_foto.config(image=foto_tk)
     lbl_foto.image = foto_tk
 
-def exibir_formulario(nome_usuario):
+def cadastrar_usuario(foto, bbox, id_usuario):
+    x, y, w, h = bbox
+    usuario = foto[y:y + h, x:x + w]
+    atualizar_msg(f"Cadastrar usuário {id_usuario}")
     frm_cadastro.pack(pady=20)
-    lbl_nome.config(text=f"Nome (Usuário: {nome_usuario})")
-    for campo in [ent_nome, ent_email, ent_telefone]:
-        campo.delete(0, tk.END)
 
-def esconder_formulario():
-    frm_cadastro.pack_forget()
-
-def cadastrar_usuario(foto, deteccao, idx):
-    bboxC = deteccao.location_data.relative_bounding_box
-    h, w, _ = foto.shape
-    x, y, w_box, h_box = (int(bboxC.xmin * w), int(bboxC.ymin * h), int(bboxC.width * w), int(bboxC.height * h))
-    usuario = foto[y:y + h_box, x:x + w_box]
-    id_usuario = f'usuario_{idx}'
-
-    banco = carregar_banco()
-    if id_usuario in banco:
-        dados = banco[id_usuario]["dados"]
-        atualizar_msg(f"Usuário {id_usuario} já cadastrado.")
-        exibir_foto(foto)
-        for campo, valor in zip([ent_nome, ent_email, ent_telefone], [dados["nome"], dados["email"], dados["telefone"]]):
-            campo.insert(0, valor)
-        exibir_formulario(id_usuario)
-        return
-
-    atualizar_msg(f"Cadastro do usuário {id_usuario}")
-    exibir_formulario(id_usuario)
-
-    def completar_cadastro():
-        dados_usuario = { "nome": ent_nome.get(), "email": ent_email.get(), "telefone": ent_telefone.get() }
+    def confirmar_cadastro():
+        banco = carregar_banco()
+        dados_usuario = {"nome": ent_nome.get(), "email": ent_email.get(), "telefone": ent_telefone.get()}
         caminho_foto = os.path.join(usuarios_dir, f'{id_usuario}.jpg')
-        caminho_foto_original = os.path.join(usuarios_dir, f'{id_usuario}_original.jpg')
         cv2.imwrite(caminho_foto, usuario)
-        cv2.imwrite(caminho_foto_original, foto)
-        banco[id_usuario] = { "foto": caminho_foto, "foto_original": caminho_foto_original, "dados": dados_usuario }
+        banco[id_usuario] = {"foto": caminho_foto, "dados": dados_usuario}
         salvar_banco(banco)
         atualizar_msg(f"Usuário {id_usuario} cadastrado com sucesso.")
-        esconder_formulario()
+        frm_cadastro.pack_forget()
         exibir_foto(foto)
 
-    btn_confirmar.config(command=completar_cadastro)
+    btn_confirmar.config(command=confirmar_cadastro)
 
 def processar_foto(foto):
     with mp_face_detection.FaceDetection(min_detection_confidence=0.5) as face_detection:
-        foto_rgb = cv2.cvtColor(foto, cv2.COLOR_BGR2RGB)
-        resultado = face_detection.process(foto_rgb)
+        resultado = face_detection.process(cv2.cvtColor(foto, cv2.COLOR_BGR2RGB))
         if not resultado.detections:
             atualizar_msg("Nenhum rosto detectado.")
             return
+        banco = carregar_banco()
         for idx, deteccao in enumerate(resultado.detections):
-            banco = carregar_banco()
+            bboxC = deteccao.location_data.relative_bounding_box
+            h, w, _ = foto.shape
+            bbox = (int(bboxC.xmin * w), int(bboxC.ymin * h), int(bboxC.width * w), int(bboxC.height * h))
             id_usuario = f'usuario_{idx}'
-
-            if id_usuario not in banco:  
-                cadastrar_usuario(foto, deteccao, idx)
+            if id_usuario not in banco:
+                cadastrar_usuario(foto, bbox, id_usuario)
                 return
-
-            mp_drawing.draw_detection(foto, deteccao)
-        exibir_foto(foto)
+        atualizar_msg("O usuário já está cadastrado.")
 
 def escolher_foto():
-    caminho = filedialog.askopenfilename(title="Selecione uma foto", filetypes=[("Imagens", "*.jpg;*.jpeg;*.png")])
+    caminho = filedialog.askopenfilename(filetypes=[("Imagens", "*.jpg;*.jpeg;*.png")])
     if caminho:
-        try:
-            foto = cv2.imread(caminho)
-            if foto is None:
-                atualizar_msg(f"Não foi possível carregar a foto: {caminho}")
-                return
+        foto = cv2.imread(caminho)
+        if foto is not None:
             processar_foto(foto)
-        except Exception as e:
-            atualizar_msg(f"Erro ao processar a foto: {str(e)}")
+        else:
+            atualizar_msg("Não foi possível carregar a foto.")
 
 def capturar_foto_com_webcam():
-    try:
-        captura = cv2.VideoCapture(0)
-        if not captura.isOpened():
-            atualizar_msg("Não foi possível acessar a câmera.")
-            return
-
-        atualizar_msg("Pressione 'Espaço' para capturar a foto ou 'Esc' para sair.")
-        while True:
-            ret, frame = captura.read()
-            if not ret:
-                atualizar_msg("Erro ao capturar a imagem.")
-                break
-
-            cv2.imshow("Captura de Foto", frame)
-            key = cv2.waitKey(1)
-            if key == 27: 
-                break
-            elif key == 32: 
-                captura.release()
-                cv2.destroyAllWindows()
-                processar_foto(frame)
-                break
-    except Exception as e:
-        atualizar_msg(f"Erro ao acessar a câmera: {str(e)}")
-
-def editar_usuario(banco, id_usuario):
-    def salvar_edicao():
-        dados_usuario = { "nome": ent_nome.get(), "email": ent_email.get(), "telefone": ent_telefone.get() }
-        banco[id_usuario]["dados"] = dados_usuario
-        salvar_banco(banco)
-        atualizar_msg(f"Usuário {id_usuario} atualizado.")
-        janela_edicao.destroy()
-
-    dados = banco[id_usuario]["dados"]
-    janela_edicao = Toplevel()
-    janela_edicao.title(f"Editar {id_usuario}")
-    
-    tk.Label(janela_edicao, text="Nome").pack(pady=5)
-    ent_nome = tk.Entry(janela_edicao)
-    ent_nome.insert(0, dados["nome"])
-    ent_nome.pack(pady=5)
-
-    tk.Label(janela_edicao, text="E-mail").pack(pady=5)
-    ent_email = tk.Entry(janela_edicao)
-    ent_email.insert(0, dados["email"])
-    ent_email.pack(pady=5)
-
-    tk.Label(janela_edicao, text="Telefone").pack(pady=5)
-    ent_telefone = tk.Entry(janela_edicao)
-    ent_telefone.insert(0, dados["telefone"])
-    ent_telefone.pack(pady=5)
-
-    btn_salvar = tk.Button(janela_edicao, text="Salvar", command=salvar_edicao)
-    btn_salvar.pack(pady=10)
-
-def remover_usuario(banco, id_usuario):
-    resposta = messagebox.askyesno("Confirmar", f"Você tem certeza que deseja remover o usuário {id_usuario}?")
-    if resposta:
-        del banco[id_usuario]
-        salvar_banco(banco)
-        atualizar_msg(f"Usuário {id_usuario} removido.")
-
-def visualizar_banco():
-    banco = carregar_banco()
-    janela_banco = Toplevel()
-    janela_banco.title("Banco de Dados de Usuários")
-    janela_banco.geometry("500x600")
-
-    lbl_titulo_banco = tk.Label(janela_banco, text="Usuários Cadastrados", font=("Arial", 16, "bold"))
-    lbl_titulo_banco.pack(pady=10)
-
-    for id_usuario, info in banco.items():
-        usuario = info["dados"]
-        foto_usuario = cv2.imread(info["foto_original"])
-        proporcao = min(100 / foto_usuario.shape[1], 100 / foto_usuario.shape[0])
-        nova_largura, nova_altura = int(foto_usuario.shape[1] * proporcao), int(foto_usuario.shape[0] * proporcao)
-        foto_usuario_resized = cv2.cvtColor(cv2.resize(foto_usuario, (nova_largura, nova_altura)), cv2.COLOR_BGR2RGB)
-        foto_usuario_tk = ImageTk.PhotoImage(image=Image.fromarray(foto_usuario_resized))
-
-        frame_usuario = tk.Frame(janela_banco)
-        frame_usuario.pack(pady=10)
-
-        lbl_foto_usuario = tk.Label(frame_usuario, image=foto_usuario_tk)
-        lbl_foto_usuario.image = foto_usuario_tk
-        lbl_foto_usuario.grid(row=0, column=0, padx=10)
-
-        lbl_info_usuario = tk.Label(frame_usuario, text=f"Nome: {usuario['nome']}\nE-mail: {usuario['email']}\nTelefone: {usuario['telefone']}",
-                                    font=("Arial", 12))
-        lbl_info_usuario.grid(row=0, column=1, padx=10)
-
-        btn_editar = tk.Button(frame_usuario, text="Editar", command=lambda id_usuario=id_usuario: editar_usuario(banco, id_usuario))
-        btn_editar.grid(row=0, column=2, padx=10)
-
-        btn_remover = tk.Button(frame_usuario, text="Remover", command=lambda id_usuario=id_usuario: remover_usuario(banco, id_usuario))
-        btn_remover.grid(row=0, column=3, padx=10)
+    captura = cv2.VideoCapture(0)
+    if not captura.isOpened():
+        atualizar_msg("Não foi possível acessar a câmera.")
+        return
+    atualizar_msg("Pressione 'Espaço' para capturar ou 'Esc' para sair.")
+    while True:
+        ret, frame = captura.read()
+        if not ret:
+            atualizar_msg("Erro ao capturar a imagem.")
+            break
+        cv2.imshow("Captura de Foto", frame)
+        key = cv2.waitKey(1)
+        if key == 27:
+            break
+        elif key == 32:
+            captura.release()
+            cv2.destroyAllWindows()
+            processar_foto(frame)
+            break
 
 app = tk.Tk()
 app.title("Detector de Usuários")
 app.state('zoomed')
 app.config(bg="#f5f5f5")
 
-lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
-lbl_titulo.pack(pady=10)
-
-btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 14, "bold"))
-btn_escolher.pack(pady=20)
-
-btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 14, "bold"))
-btn_capturar_ip.pack(pady=20)
-
-btn_ver_banco = tk.Button(app, text="Ver Banco de Dados", command=visualizar_banco, bg="#2196F3", fg="white", font=("Arial", 14, "bold"))
-btn_ver_banco.pack(pady=20)
-
+tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5").pack(pady=10)
+tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 14, "bold")).pack(pady=20)
+tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 14, "bold")).pack(pady=20)
 lbl_msg = tk.Label(app, text="", font=("Arial", 12), bg="#f5f5f5", fg="blue")
 lbl_msg.pack(pady=10)
-
 lbl_foto = tk.Label(app, bg="#f5f5f5")
 lbl_foto.pack(pady=20)
 
 frm_cadastro = tk.Frame(app, bg="#f5f5f5")
-lbl_nome = tk.Label(frm_cadastro, text="Nome", font=("Arial", 12), bg="#f5f5f5")
-lbl_nome.grid(row=0, column=0, padx=10, pady=5)
-ent_nome = tk.Entry(frm_cadastro, font=("Arial", 12))
-ent_nome.grid(row=0, column=1, padx=10, pady=5)
-
-lbl_email = tk.Label(frm_cadastro, text="E-mail", font=("Arial", 12), bg="#f5f5f5")
-lbl_email.grid(row=1, column=0, padx=10, pady=5)
-ent_email = tk.Entry(frm_cadastro, font=("Arial", 12))
-ent_email.grid(row=1, column=1, padx=10, pady=5)
-
-lbl_telefone = tk.Label(frm_cadastro, text="Telefone", font=("Arial", 12), bg="#f5f5f5")
-lbl_telefone.grid(row=2, column=0, padx=10, pady=5)
-ent_telefone = tk.Entry(frm_cadastro, font=("Arial", 12))
-ent_telefone.grid(row=2, column=1, padx=10, pady=5)
-
+ent_nome, ent_email, ent_telefone = (tk.Entry(frm_cadastro, font=("Arial", 12)) for _ in range(3))
+for idx, (texto, entrada) in enumerate(zip(["Nome", "E-mail", "Telefone"], [ent_nome, ent_email, ent_telefone])):
+    tk.Label(frm_cadastro, text=texto, font=("Arial", 12), bg="#f5f5f5").grid(row=idx, column=0, padx=10, pady=5)
+    entrada.grid(row=idx, column=1, padx=10, pady=5)
 btn_confirmar = tk.Button(frm_cadastro, text="Confirmar Cadastro", font=("Arial", 12), bg="#4CAF50", fg="white")
 btn_confirmar.grid(row=3, column=0, columnspan=2, pady=10)
 
