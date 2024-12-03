@@ -65,7 +65,7 @@ def cadastrar_usuario(foto, deteccao, idx):
         ent_telefone.delete(0, tk.END)
         ent_telefone.insert(0, dados["telefone"])
         
-        frm_cadastro.pack(pady=20) 
+        frm_cadastro.pack(pady=20)
         return
 
     atualizar_msg(f"Cadastro do usuário {id_usuario}")
@@ -138,10 +138,34 @@ def capturar_foto_com_webcam():
     except Exception as e:
         atualizar_msg(f"Erro ao acessar a câmera: {str(e)}")
 
+def exibir_usuarios():
+    banco = carregar_banco()
+    if not banco:
+        atualizar_msg("Nenhum usuário cadastrado.")
+        return
+    
+    janela_usuarios = tk.Toplevel(app)
+    janela_usuarios.title("Usuários Cadastrados")
+    janela_usuarios.geometry("400x300")
+    janela_usuarios.config(bg="#f5f5f5")
+
+    lbl_titulo = tk.Label(janela_usuarios, text="Usuários Cadastrados", font=("Arial", 14, "bold"), bg="#f5f5f5")
+    lbl_titulo.pack(pady=10)
+
+    frm_usuarios = tk.Frame(janela_usuarios, bg="#f5f5f5")
+    frm_usuarios.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+    for id_usuario, info in banco.items():
+        nome = info["dados"].get("nome", "N/A")
+        email = info["dados"].get("email", "N/A")
+        telefone = info["dados"].get("telefone", "N/A")
+        texto_usuario = f"{id_usuario}: {nome} | {email} | {telefone}"
+        lbl_usuario = tk.Label(frm_usuarios, text=texto_usuario, font=("Arial", 12), bg="#f5f5f5", anchor="w")
+        lbl_usuario.pack(fill=tk.X, pady=2)
 
 app = tk.Tk()
 app.title("Detector de Usuários")
-app.geometry("450x600")
+app.geometry("450x700")
 app.config(bg="#f5f5f5")
 
 lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
@@ -155,6 +179,9 @@ btn_escolher.pack(pady=20)
 
 btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 14, "bold"), relief="raised", bd=5)
 btn_capturar_ip.pack(pady=20)
+
+btn_exibir_usuarios = tk.Button(app, text="Exibir Usuários Cadastrados", command=exibir_usuarios, bg="#2196F3", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
+btn_exibir_usuarios.pack(pady=20)
 
 lbl_msg = tk.Label(app, text="", font=("Arial", 12), bg="#f5f5f5", fg="blue")
 lbl_msg.pack(pady=10)
