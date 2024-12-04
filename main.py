@@ -138,6 +138,40 @@ def capturar_foto_com_webcam():
     except Exception as e:
         atualizar_msg(f"Erro ao acessar a câmera: {str(e)}")
 
+def editar_usuario(id_usuario):
+    banco = carregar_banco()
+    if id_usuario in banco:
+        info = banco[id_usuario]
+        exibir_formulario(id_usuario)
+        ent_nome.delete(0, tk.END)
+        ent_nome.insert(0, info["dados"]["nome"])
+        ent_email.delete(0, tk.END)
+        ent_email.insert(0, info["dados"]["email"])
+        ent_telefone.delete(0, tk.END)
+        ent_telefone.insert(0, info["dados"]["telefone"])
+        
+        def salvar_edicao():
+            nome = ent_nome.get()
+            email = ent_email.get()
+            telefone = ent_telefone.get()
+            banco[id_usuario]["dados"] = {"nome": nome, "email": email, "telefone": telefone}
+            salvar_banco(banco)
+            atualizar_msg(f"Usuário {id_usuario} atualizado com sucesso.")
+            esconder_formulario()
+
+        btn_confirmar.config(command=salvar_edicao)
+    else:
+        atualizar_msg(f"Usuário {id_usuario} não encontrado.")
+
+def excluir_usuario(id_usuario):
+    banco = carregar_banco()
+    if id_usuario in banco:
+        del banco[id_usuario]
+        salvar_banco(banco)
+        atualizar_msg(f"Usuário {id_usuario} excluído com sucesso.")
+    else:
+        atualizar_msg(f"Usuário {id_usuario} não encontrado.")
+
 def exibir_usuarios():
     banco = carregar_banco()
     if not banco:
@@ -146,7 +180,7 @@ def exibir_usuarios():
     
     janela_usuarios = tk.Toplevel(app)
     janela_usuarios.title("Usuários Cadastrados")
-    janela_usuarios.geometry("400x300")
+    janela_usuarios.geometry("500x400")
     janela_usuarios.config(bg="#f5f5f5")
 
     lbl_titulo = tk.Label(janela_usuarios, text="Usuários Cadastrados", font=("Arial", 14, "bold"), bg="#f5f5f5")
@@ -160,8 +194,21 @@ def exibir_usuarios():
         email = info["dados"].get("email", "N/A")
         telefone = info["dados"].get("telefone", "N/A")
         texto_usuario = f"{id_usuario}: {nome} | {email} | {telefone}"
-        lbl_usuario = tk.Label(frm_usuarios, text=texto_usuario, font=("Arial", 12), bg="#f5f5f5", anchor="w")
-        lbl_usuario.pack(fill=tk.X, pady=2)
+
+        frm_usuario = tk.Frame(frm_usuarios, bg="#e0e0e0", padx=5, pady=5)
+        frm_usuario.pack(fill=tk.X, pady=5)
+
+        lbl_usuario = tk.Label(frm_usuario, text=texto_usuario, font=("Arial", 12), bg="#e0e0e0", anchor="w")
+        lbl_usuario.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        btn_editar = tk.Button(frm_usuario, text="Editar", font=("Arial", 10), bg="#FFC107", fg="black", 
+                               command=lambda u=id_usuario: editar_usuario(u))
+        btn_editar.pack(side=tk.RIGHT, padx=5)
+
+        btn_excluir = tk.Button(frm_usuario, text="Excluir", font=("Arial", 10), bg="#F44336", fg="white", 
+                                command=lambda u=id_usuario: excluir_usuario(u))
+        btn_excluir.pack(side=tk.RIGHT, padx=5)
+
 
 app = tk.Tk()
 app.title("Detector de Usuários")
