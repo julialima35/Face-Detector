@@ -6,14 +6,11 @@ from PIL import Image, ImageTk
 import pickle
 import mediapipe as mp
 
-# Configurações do MediaPipe
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 usuarios_dir = 'usuarios'
-
 os.makedirs(usuarios_dir, exist_ok=True)
 
-# Funções de banco de dados
 def carregar_banco():
     try:
         with open('banco_usuarios.pkl', 'rb') as f:
@@ -25,11 +22,9 @@ def salvar_banco(banco):
     with open('banco_usuarios.pkl', 'wb') as f:
         pickle.dump(banco, f)
 
-# Função de atualização da mensagem
 def atualizar_msg(msg):
     lbl_msg.config(text=msg)
 
-# Função para exibir a foto
 def exibir_foto(foto):
     altura_max, largura_max = 400, 400
     altura, largura = foto.shape[:2]
@@ -40,7 +35,6 @@ def exibir_foto(foto):
     lbl_foto.config(image=foto_tk)
     lbl_foto.image = foto_tk
 
-# Função para exibir o formulário de cadastro
 def exibir_formulario(nome_usuario):
     frm_cadastro.pack(pady=20)
     lbl_nome.config(text=f"Nome (Usuário: {nome_usuario})")
@@ -51,7 +45,6 @@ def exibir_formulario(nome_usuario):
 def esconder_formulario():
     frm_cadastro.pack_forget()
 
-# Função para cadastro de usuário
 def cadastrar_usuario(foto, deteccao, idx):
     bboxC = deteccao.location_data.relative_bounding_box
     h, w, _ = foto.shape
@@ -89,7 +82,6 @@ def cadastrar_usuario(foto, deteccao, idx):
 
     btn_confirmar.config(command=completar_cadastro)
 
-# Função de processamento de foto
 def processar_foto(foto):
     with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
         foto_rgb = cv2.cvtColor(foto, cv2.COLOR_BGR2RGB)
@@ -103,7 +95,6 @@ def processar_foto(foto):
             mp_drawing.draw_detection(foto, deteccao)
         exibir_foto(foto)
 
-# Função para escolher uma foto
 def escolher_foto():
     caminho = filedialog.askopenfilename(title="Selecione uma foto", filetypes=[("Imagens", "*.jpg;*.jpeg;*.png")])
     if caminho:
@@ -116,7 +107,6 @@ def escolher_foto():
         except Exception as e:
             atualizar_msg(f"Erro ao processar a foto: {str(e)}")
 
-# Função para capturar foto via webcam
 def capturar_foto_com_webcam():
     try:
         captura = cv2.VideoCapture(0)
@@ -133,9 +123,9 @@ def capturar_foto_com_webcam():
 
             cv2.imshow("Captura de Foto - Pressione 'Espaço' para capturar", frame)
             key = cv2.waitKey(1)
-            if key == 27:  # Esc
+            if key == 27:
                 break
-            elif key == 32:  # Espaço
+            elif key == 32:
                 captura.release()
                 cv2.destroyAllWindows()
                 processar_foto(frame)
@@ -143,7 +133,6 @@ def capturar_foto_com_webcam():
     except Exception as e:
         atualizar_msg(f"Erro ao acessar a câmera: {str(e)}")
 
-# Função para editar dados de um usuário
 def editar_usuario(id_usuario):
     banco = carregar_banco()
     if id_usuario in banco:
@@ -167,7 +156,6 @@ def editar_usuario(id_usuario):
     else:
         atualizar_msg(f"Usuário {id_usuario} não encontrado.")
 
-# Função para excluir usuário
 def excluir_usuario(id_usuario):
     banco = carregar_banco()
     if id_usuario in banco:
@@ -177,7 +165,6 @@ def excluir_usuario(id_usuario):
     else:
         atualizar_msg(f"Usuário {id_usuario} não encontrado.")
 
-# Função para exibir lista de usuários
 def exibir_usuarios():
     banco = carregar_banco()
     if not banco:
@@ -215,7 +202,6 @@ def exibir_usuarios():
                                 command=lambda u=id_usuario: excluir_usuario(u))
         btn_excluir.pack(side=tk.RIGHT, padx=5)
 
-# Configuração do aplicativo
 app = tk.Tk()
 app.title("Detector de Usuários")
 app.geometry("450x700")
@@ -242,7 +228,6 @@ lbl_msg.pack(pady=10)
 lbl_foto = tk.Label(app, bg="#f5f5f5")
 lbl_foto.pack(pady=20)
 
-# Formulário de cadastro
 frm_cadastro = tk.Frame(app, bg="#f5f5f5")
 lbl_nome = tk.Label(frm_cadastro, text="Nome", font=("Arial", 12), bg="#f5f5f5")
 lbl_nome.grid(row=0, column=0, padx=10, pady=5)
