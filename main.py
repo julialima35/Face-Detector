@@ -6,13 +6,13 @@ from PIL import Image, ImageTk
 import pickle
 import mediapipe as mp
 
-# Inicializando as variáveis do MediaPipe
+
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 usuarios_dir = 'usuarios'
 os.makedirs(usuarios_dir, exist_ok=True)
 
-# Funções auxiliares de banco de dados
+
 def carregar_banco():
     """Carrega o banco de dados de usuários, retornando um dicionário vazio se não encontrar o arquivo."""
     try:
@@ -26,7 +26,7 @@ def salvar_banco(banco):
     with open('banco_usuarios.pkl', 'wb') as f:
         pickle.dump(banco, f)
 
-# Funções de interface
+
 def atualizar_msg(msg):
     """Atualiza a mensagem exibida na interface."""
     lbl_msg.config(text=msg)
@@ -54,7 +54,7 @@ def esconder_formulario():
     """Esconde o formulário de cadastro."""
     frm_cadastro.pack_forget()
 
-# Função para cadastrar um novo usuário
+
 def cadastrar_usuario(foto, deteccao, idx):
     """Realiza o cadastro de um novo usuário detectado na foto."""
     bboxC = deteccao.location_data.relative_bounding_box
@@ -228,13 +228,13 @@ def exibir_usuarios():
                                 command=lambda u=id_usuario: excluir_usuario(u))
         btn_excluir.pack(side=tk.RIGHT, padx=5)
 
-# Função principal da interface
+
 app = tk.Tk()
 app.title("Detector de Usuários")
 app.geometry("450x700")
 app.config(bg="#f5f5f5")
 
-# Layout principal da interface
+
 lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
 lbl_titulo.pack(pady=10)
 
@@ -256,7 +256,7 @@ lbl_msg.pack(pady=10)
 lbl_foto = tk.Label(app, bg="#f5f5f5")
 lbl_foto.pack(pady=20)
 
-# Formulário de cadastro de usuário
+
 frm_cadastro = tk.Frame(app, bg="#f5f5f5")
 lbl_nome = tk.Label(frm_cadastro, text="Nome", font=("Arial", 12), bg="#f5f5f5")
 lbl_nome.grid(row=0, column=0, padx=10, pady=5)
