@@ -5,6 +5,7 @@ from tkinter import filedialog
 from PIL import Image, ImageTk
 import pickle
 import mediapipe as mp
+import csv
 
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
@@ -166,6 +167,27 @@ def excluir_usuario(id_usuario):
     else:
         atualizar_msg(f"Usuário {id_usuario} não encontrado.")
 
+def exportar_usuarios_csv():
+    banco = carregar_banco()
+    if not banco:
+        atualizar_msg("Nenhum usuário cadastrado para exportar.")
+        return
+
+    caminho = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Files", "*.csv")])
+    if not caminho:
+        return
+
+    try:
+        with open(caminho, mode='w', newline='', encoding='utf-8') as arquivo_csv:
+            escritor = csv.writer(arquivo_csv)
+            escritor.writerow(["ID do Usuário", "Nome", "E-mail", "Telefone"])
+            for id_usuario, info in banco.items():
+                dados = info["dados"]
+                escritor.writerow([id_usuario, dados.get("nome", "N/A"), dados.get("email", "N/A"), dados.get("telefone", "N/A")])
+        atualizar_msg(f"Usuários exportados com sucesso para {caminho}.")
+    except Exception as e:
+        atualizar_msg(f"Erro ao exportar usuários: {str(e)}")
+
 def exibir_usuarios():
     banco = carregar_banco()
     if not banco:
@@ -205,7 +227,7 @@ def exibir_usuarios():
 
 app = tk.Tk()
 app.title("Detector de Usuários")
-app.geometry("450x700")
+app.geometry("450x750")
 app.config(bg="#f5f5f5")
 
 lbl_titulo = tk.Label(app, text="Detector de Usuários", font=("Arial", 18, "bold"), bg="#f5f5f5")
@@ -214,14 +236,17 @@ lbl_titulo.pack(pady=10)
 lbl_instr = tk.Label(app, text="Escolha uma foto ou use a câmera", font=("Arial", 12), bg="#f5f5f5")
 lbl_instr.pack(pady=5)
 
-btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
-btn_escolher.pack(pady=20)
+btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=20)
+btn_escolher.pack(pady=10)
 
-btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 14, "bold"), relief="raised", bd=5)
-btn_capturar_ip.pack(pady=20)
+btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 12, "bold"), relief="raised", bd=5, width=20)
+btn_capturar_ip.pack(pady=10)
 
-btn_exibir_usuarios = tk.Button(app, text="Exibir Usuários Cadastrados", command=exibir_usuarios, bg="#2196F3", fg="white", font=("Arial", 14, "bold"), relief="raised", bd=5)
-btn_exibir_usuarios.pack(pady=20)
+btn_exibir_usuarios = tk.Button(app, text="Exibir Usuários Cadastrados", command=exibir_usuarios, bg="#2196F3", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=20)
+btn_exibir_usuarios.pack(pady=10)
+
+btn_exportar_csv = tk.Button(app, text="Exportar Usuários (CSV)", command=exportar_usuarios_csv, bg="#FF9800", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=20)
+btn_exportar_csv.pack(pady=10)
 
 lbl_msg = tk.Label(app, text="", font=("Arial", 12), bg="#f5f5f5", fg="blue")
 lbl_msg.pack(pady=10)
