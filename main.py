@@ -236,16 +236,16 @@ lbl_titulo.pack(pady=10)
 lbl_instr = tk.Label(app, text="Escolha uma foto ou use a câmera", font=("Arial", 12), bg="#f5f5f5")
 lbl_instr.pack(pady=5)
 
-btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=20)
+btn_escolher = tk.Button(app, text="Escolher Foto", command=escolher_foto, bg="#4CAF50", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=25)
 btn_escolher.pack(pady=10)
 
-btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 12, "bold"), relief="raised", bd=5, width=20)
+btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 12, "bold"), relief="raised", bd=5, width=25)
 btn_capturar_ip.pack(pady=10)
 
-btn_exibir_usuarios = tk.Button(app, text="Exibir Usuários Cadastrados", command=exibir_usuarios, bg="#2196F3", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=20)
+btn_exibir_usuarios = tk.Button(app, text="Exibir Usuários Cadastrados", command=exibir_usuarios, bg="#2196F3", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=25)
 btn_exibir_usuarios.pack(pady=10)
 
-btn_exportar_csv = tk.Button(app, text="Exportar Usuários (CSV)", command=exportar_usuarios_csv, bg="#FF9800", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=20)
+btn_exportar_csv = tk.Button(app, text="Exportar Usuários (CSV)", command=exportar_usuarios_csv, bg="#FF9800", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=25)
 btn_exportar_csv.pack(pady=10)
 
 lbl_msg = tk.Label(app, text="", font=("Arial", 12), bg="#f5f5f5", fg="blue")
