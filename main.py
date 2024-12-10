@@ -46,6 +46,13 @@ def exibir_formulario(nome_usuario):
 def esconder_formulario():
     frm_cadastro.pack_forget()
 
+def verificar_email_unico(email):
+    banco = carregar_banco()
+    for usuario in banco.values():
+        if usuario["dados"].get("email") == email:
+            return False
+    return True
+
 def cadastrar_usuario(foto, deteccao, idx):
     bboxC = deteccao.location_data.relative_bounding_box
     h, w, _ = foto.shape
@@ -65,9 +72,14 @@ def cadastrar_usuario(foto, deteccao, idx):
     exibir_formulario(id_usuario)
 
     def completar_cadastro():
+        email = ent_email.get()
+        if not verificar_email_unico(email):
+            atualizar_msg("E-mail já cadastrado.")
+            return
+
         dados_usuario = {
             "nome": ent_nome.get(),
-            "email": ent_email.get(),
+            "email": email,
             "telefone": ent_telefone.get()
         }
         caminho_foto = os.path.join(usuarios_dir, f'{id_usuario}.jpg')
@@ -156,6 +168,9 @@ def editar_usuario(id_usuario):
 def excluir_usuario(id_usuario):
     banco = carregar_banco()
     if id_usuario in banco:
+        caminho_foto = banco[id_usuario]["foto"]
+        if os.path.exists(caminho_foto):
+            os.remove(caminho_foto)
         del banco[id_usuario]
         salvar_banco(banco)
         atualizar_msg(f"Usuário {id_usuario} excluído com sucesso.")
