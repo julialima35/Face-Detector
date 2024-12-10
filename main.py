@@ -112,30 +112,25 @@ def escolher_foto():
             atualizar_msg(f"Erro ao processar a foto: {str(e)}")
 
 def capturar_foto_com_webcam():
-    try:
-        captura = cv2.VideoCapture(0)
-        if not captura.isOpened():
-            atualizar_msg("Não foi possível acessar a câmera.")
-            return
-
-        atualizar_msg("Pressione 'Espaço' para capturar a foto ou 'Esc' para sair.")
-        while True:
-            ret, frame = captura.read()
-            if not ret:
-                atualizar_msg("Erro ao capturar a imagem.")
-                break
-
-            cv2.imshow("Captura de Foto - Pressione 'Espaço' para capturar", frame)
-            key = cv2.waitKey(1)
-            if key == 27:
-                break
-            elif key == 32:
-                captura.release()
-                cv2.destroyAllWindows()
-                processar_foto(frame)
-                break
-    except Exception as e:
-        atualizar_msg(f"Erro ao acessar a câmera: {str(e)}")
+    captura = cv2.VideoCapture(0)
+    if not captura.isOpened():
+        atualizar_msg("Não foi possível acessar a câmera.")
+        return
+    atualizar_msg("Pressione 'Espaço' para capturar ou 'Esc' para sair.")
+    while True:
+        ret, frame = captura.read()
+        if not ret:
+            atualizar_msg("Erro ao capturar a imagem.")
+            break
+        cv2.imshow("Captura de Foto", frame)
+        key = cv2.waitKey(1)
+        if key == 27:
+            break
+        elif key == 32:
+            captura.release()
+            cv2.destroyAllWindows()
+            processar_foto(frame)
+            break
 
 def editar_usuario(id_usuario):
     banco = carregar_banco()
@@ -172,11 +167,9 @@ def exportar_usuarios_csv():
     if not banco:
         atualizar_msg("Nenhum usuário cadastrado para exportar.")
         return
-
     caminho = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Files", "*.csv")])
     if not caminho:
         return
-
     try:
         with open(caminho, mode='w', newline='', encoding='utf-8') as arquivo_csv:
             escritor = csv.writer(arquivo_csv)
@@ -193,34 +186,26 @@ def exibir_usuarios():
     if not banco:
         atualizar_msg("Nenhum usuário cadastrado.")
         return
-
     janela_usuarios = tk.Toplevel(app)
     janela_usuarios.title("Usuários Cadastrados")
     janela_usuarios.geometry("500x400")
     janela_usuarios.config(bg="#f5f5f5")
-
     lbl_titulo = tk.Label(janela_usuarios, text="Usuários Cadastrados", font=("Arial", 14, "bold"), bg="#f5f5f5")
     lbl_titulo.pack(pady=10)
-
     frm_usuarios = tk.Frame(janela_usuarios, bg="#f5f5f5")
     frm_usuarios.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-
     for id_usuario, info in banco.items():
         nome = info["dados"].get("nome", "N/A")
         email = info["dados"].get("email", "N/A")
         telefone = info["dados"].get("telefone", "N/A")
         texto_usuario = f"{id_usuario}: {nome} | {email} | {telefone}"
-
         frm_usuario = tk.Frame(frm_usuarios, bg="#e0e0e0", padx=5, pady=5)
         frm_usuario.pack(fill=tk.X, pady=5)
-
         lbl_usuario = tk.Label(frm_usuario, text=texto_usuario, font=("Arial", 12), bg="#e0e0e0", anchor="w")
         lbl_usuario.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
         btn_editar = tk.Button(frm_usuario, text="Editar", font=("Arial", 10), bg="#FFC107", fg="black", 
                                command=lambda u=id_usuario: editar_usuario(u))
         btn_editar.pack(side=tk.RIGHT, padx=5)
-
         btn_excluir = tk.Button(frm_usuario, text="Excluir", font=("Arial", 10), bg="#F44336", fg="white", 
                                 command=lambda u=id_usuario: excluir_usuario(u))
         btn_excluir.pack(side=tk.RIGHT, padx=5)
