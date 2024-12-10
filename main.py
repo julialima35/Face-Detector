@@ -53,6 +53,15 @@ def verificar_email_unico(email):
             return False
     return True
 
+def verificar_campos_validos():
+    nome = ent_nome.get().strip()
+    email = ent_email.get().strip()
+    telefone = ent_telefone.get().strip()
+    if not nome or not email or not telefone:
+        atualizar_msg("Todos os campos devem ser preenchidos.")
+        return False
+    return True
+
 def cadastrar_usuario(foto, deteccao, idx):
     bboxC = deteccao.location_data.relative_bounding_box
     h, w, _ = foto.shape
@@ -72,6 +81,9 @@ def cadastrar_usuario(foto, deteccao, idx):
     exibir_formulario(id_usuario)
 
     def completar_cadastro():
+        if not verificar_campos_validos():
+            return
+
         email = ent_email.get()
         if not verificar_email_unico(email):
             atualizar_msg("E-mail já cadastrado.")
