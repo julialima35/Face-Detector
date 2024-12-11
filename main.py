@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 import pickle
 import mediapipe as mp
 import csv
+import re
 
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
@@ -53,12 +54,19 @@ def verificar_email_unico(email):
             return False
     return True
 
+def verificar_email_valido(email):
+    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    return re.match(email_regex, email)
+
 def verificar_campos_validos():
     nome = ent_nome.get().strip()
     email = ent_email.get().strip()
     telefone = ent_telefone.get().strip()
     if not nome or not email or not telefone:
         atualizar_msg("Todos os campos devem ser preenchidos.")
+        return False
+    if not verificar_email_valido(email):
+        atualizar_msg("E-mail inválido.")
         return False
     return True
 
@@ -228,7 +236,7 @@ def exibir_usuarios(pesquisa=""):
         nome = info["dados"].get("nome", "N/A")
         email = info["dados"].get("email", "N/A")
         telefone = info["dados"].get("telefone", "N/A")
-        if pesquisa.lower() in nome.lower() or pesquisa.lower() in email.lower():
+        if pesquisa.lower() in nome.lower() or pesquisa.lower() in email.lower() or pesquisa.lower() in telefone.lower():
             texto_usuario = f"{id_usuario}: {nome} | {email} | {telefone}"
             frm_usuario = tk.Frame(frm_usuarios, bg="#e0e0e0", padx=5, pady=5)
             frm_usuario.pack(fill=tk.X, pady=5)
