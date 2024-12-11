@@ -1,7 +1,7 @@
 import cv2
 import os
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import pickle
 import mediapipe as mp
@@ -186,16 +186,18 @@ def editar_usuario(id_usuario):
         atualizar_msg(f"Usuário {id_usuario} não encontrado.")
 
 def excluir_usuario(id_usuario):
-    banco = carregar_banco()
-    if id_usuario in banco:
-        caminho_foto = banco[id_usuario]["foto"]
-        if os.path.exists(caminho_foto):
-            os.remove(caminho_foto)
-        del banco[id_usuario]
-        salvar_banco(banco)
-        atualizar_msg(f"Usuário {id_usuario} excluído com sucesso.")
-    else:
-        atualizar_msg(f"Usuário {id_usuario} não encontrado.")
+    resposta = messagebox.askyesno("Confirmar Exclusão", f"Tem certeza que deseja excluir o usuário {id_usuario}?")
+    if resposta:
+        banco = carregar_banco()
+        if id_usuario in banco:
+            caminho_foto = banco[id_usuario]["foto"]
+            if os.path.exists(caminho_foto):
+                os.remove(caminho_foto)
+            del banco[id_usuario]
+            salvar_banco(banco)
+            atualizar_msg(f"Usuário {id_usuario} excluído com sucesso.")
+        else:
+            atualizar_msg(f"Usuário {id_usuario} não encontrado.")
 
 def exportar_usuarios_csv():
     banco = carregar_banco()
@@ -213,6 +215,9 @@ def exportar_usuarios_csv():
                 dados = info["dados"]
                 escritor.writerow([id_usuario, dados.get("nome", "N/A"), dados.get("email", "N/A"), dados.get("telefone", "N/A")])
         atualizar_msg(f"Usuários exportados com sucesso para {caminho}.")
+        resposta = messagebox.askyesno("Abrir Arquivo", "Deseja abrir o arquivo CSV exportado?")
+        if resposta:
+            os.startfile(caminho)
     except Exception as e:
         atualizar_msg(f"Erro ao exportar usuários: {str(e)}")
 
