@@ -208,34 +208,48 @@ def exportar_usuarios_csv():
     except Exception as e:
         atualizar_msg(f"Erro ao exportar usuários: {str(e)}")
 
-def exibir_usuarios():
+def exibir_usuarios(pesquisa=""):
     banco = carregar_banco()
     if not banco:
         atualizar_msg("Nenhum usuário cadastrado.")
         return
     janela_usuarios = tk.Toplevel(app)
     janela_usuarios.title("Usuários Cadastrados")
-    janela_usuarios.geometry("500x400")
+    janela_usuarios.geometry("600x400")
     janela_usuarios.config(bg="#f5f5f5")
+    
     lbl_titulo = tk.Label(janela_usuarios, text="Usuários Cadastrados", font=("Arial", 14, "bold"), bg="#f5f5f5")
     lbl_titulo.pack(pady=10)
+    
     frm_usuarios = tk.Frame(janela_usuarios, bg="#f5f5f5")
     frm_usuarios.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
     for id_usuario, info in banco.items():
         nome = info["dados"].get("nome", "N/A")
         email = info["dados"].get("email", "N/A")
         telefone = info["dados"].get("telefone", "N/A")
-        texto_usuario = f"{id_usuario}: {nome} | {email} | {telefone}"
-        frm_usuario = tk.Frame(frm_usuarios, bg="#e0e0e0", padx=5, pady=5)
-        frm_usuario.pack(fill=tk.X, pady=5)
-        lbl_usuario = tk.Label(frm_usuario, text=texto_usuario, font=("Arial", 12), bg="#e0e0e0", anchor="w")
-        lbl_usuario.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        btn_editar = tk.Button(frm_usuario, text="Editar", font=("Arial", 10), bg="#FFC107", fg="black", 
-                               command=lambda u=id_usuario: editar_usuario(u))
-        btn_editar.pack(side=tk.RIGHT, padx=5)
-        btn_excluir = tk.Button(frm_usuario, text="Excluir", font=("Arial", 10), bg="#F44336", fg="white", 
-                                command=lambda u=id_usuario: excluir_usuario(u))
-        btn_excluir.pack(side=tk.RIGHT, padx=5)
+        if pesquisa.lower() in nome.lower() or pesquisa.lower() in email.lower():
+            texto_usuario = f"{id_usuario}: {nome} | {email} | {telefone}"
+            frm_usuario = tk.Frame(frm_usuarios, bg="#e0e0e0", padx=5, pady=5)
+            frm_usuario.pack(fill=tk.X, pady=5)
+            lbl_usuario = tk.Label(frm_usuario, text=texto_usuario, font=("Arial", 12), bg="#e0e0e0", anchor="w")
+            lbl_usuario.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            btn_editar = tk.Button(frm_usuario, text="Editar", font=("Arial", 10), bg="#FFC107", fg="black", 
+                                   command=lambda u=id_usuario: editar_usuario(u))
+            btn_editar.pack(side=tk.RIGHT, padx=5)
+            btn_excluir = tk.Button(frm_usuario, text="Excluir", font=("Arial", 10), bg="#F44336", fg="white", 
+                                    command=lambda u=id_usuario: excluir_usuario(u))
+            btn_excluir.pack(side=tk.RIGHT, padx=5)
+
+    # Campo de pesquisa
+    def buscar_usuarios():
+        pesquisa = ent_pesquisa.get().strip()
+        exibir_usuarios(pesquisa)
+
+    ent_pesquisa = tk.Entry(janela_usuarios, font=("Arial", 12))
+    ent_pesquisa.pack(pady=10)
+    btn_pesquisar = tk.Button(janela_usuarios, text="Pesquisar", command=buscar_usuarios, font=("Arial", 12))
+    btn_pesquisar.pack()
 
 app = tk.Tk()
 app.title("Detector de Usuários")
@@ -254,7 +268,7 @@ btn_escolher.pack(pady=10)
 btn_capturar_ip = tk.Button(app, text="Abrir Câmera", command=capturar_foto_com_webcam, bg="#FFC107", fg="black", font=("Arial", 12, "bold"), relief="raised", bd=5, width=25)
 btn_capturar_ip.pack(pady=10)
 
-btn_exibir_usuarios = tk.Button(app, text="Exibir Usuários Cadastrados", command=exibir_usuarios, bg="#2196F3", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=25)
+btn_exibir_usuarios = tk.Button(app, text="Exibir Usuários Cadastrados", command=lambda: exibir_usuarios(), bg="#2196F3", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=25)
 btn_exibir_usuarios.pack(pady=10)
 
 btn_exportar_csv = tk.Button(app, text="Exportar Usuários (CSV)", command=exportar_usuarios_csv, bg="#FF9800", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=5, width=25)
