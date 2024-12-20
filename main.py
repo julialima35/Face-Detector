@@ -21,8 +21,11 @@ def carregar_banco():
         return {}
 
 def salvar_banco(banco):
-    with open('banco_usuarios.pkl', 'wb') as f:
-        pickle.dump(banco, f)
+    try:
+        with open('banco_usuarios.pkl', 'wb') as f:
+            pickle.dump(banco, f)
+    except Exception as e:
+        atualizar_msg(f"Erro ao salvar banco de dados: {e}")
 
 def atualizar_msg(msg):
     lbl_msg.config(text=msg)
@@ -254,7 +257,6 @@ def exibir_usuarios(pesquisa=""):
                                     command=lambda u=id_usuario: excluir_usuario(u))
             btn_excluir.pack(side=tk.RIGHT, padx=5)
 
-    # Campo de pesquisa
     def buscar_usuarios():
         pesquisa = ent_pesquisa.get().strip()
         exibir_usuarios(pesquisa)
