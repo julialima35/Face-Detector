@@ -61,6 +61,10 @@ def verificar_email_valido(email):
     email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     return re.match(email_regex, email)
 
+def verificar_telefone_valido(telefone):
+    telefone_regex = r'^\+?[1-9]\d{1,14}$'  # Exemplo de formato internacional
+    return re.match(telefone_regex, telefone)
+
 def verificar_campos_validos():
     nome = ent_nome.get().strip()
     email = ent_email.get().strip()
@@ -70,6 +74,9 @@ def verificar_campos_validos():
         return False
     if not verificar_email_valido(email):
         atualizar_msg("E-mail inválido.")
+        return False
+    if not verificar_telefone_valido(telefone):
+        atualizar_msg("Telefone inválido.")
         return False
     return True
 
@@ -213,10 +220,10 @@ def exportar_usuarios_csv():
     try:
         with open(caminho, mode='w', newline='', encoding='utf-8') as arquivo_csv:
             escritor = csv.writer(arquivo_csv)
-            escritor.writerow(["ID do Usuário", "Nome", "E-mail", "Telefone"])
+            escritor.writerow(["ID do Usuário", "Nome", "E-mail", "Telefone", "Foto"])
             for id_usuario, info in banco.items():
                 dados = info["dados"]
-                escritor.writerow([id_usuario, dados.get("nome", "N/A"), dados.get("email", "N/A"), dados.get("telefone", "N/A")])
+                escritor.writerow([id_usuario, dados.get("nome", "N/A"), dados.get("email", "N/A"), dados.get("telefone", "N/A"), info["foto"]])
         atualizar_msg(f"Usuários exportados com sucesso para {caminho}.")
         resposta = messagebox.askyesno("Abrir Arquivo", "Deseja abrir o arquivo CSV exportado?")
         if resposta:
