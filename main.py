@@ -21,11 +21,8 @@ def carregar_banco():
         return {}
 
 def salvar_banco(banco):
-    try:
-        with open('banco_usuarios.pkl', 'wb') as f:
-            pickle.dump(banco, f)
-    except Exception as e:
-        atualizar_msg(f"Erro ao salvar banco de dados: {e}")
+    with open('banco_usuarios.pkl', 'wb') as f:
+        pickle.dump(banco, f)
 
 def atualizar_msg(msg):
     lbl_msg.config(text=msg)
@@ -62,7 +59,7 @@ def verificar_email_valido(email):
     return re.match(email_regex, email)
 
 def verificar_telefone_valido(telefone):
-    telefone_regex = r'^\+?[1-9]\d{1,14}$'  # Exemplo de formato internacional
+    telefone_regex = r'^\+?[0-9]{10,15}$'  # Exemplo de regex para validar números de telefone
     return re.match(telefone_regex, telefone)
 
 def verificar_campos_validos():
@@ -108,7 +105,7 @@ def cadastrar_usuario(foto, deteccao, idx):
             return
 
         dados_usuario = {
-            "nome": ent_nome.get(),
+ "nome": ent_nome.get(),
             "email": email,
             "telefone": ent_telefone.get()
         }
@@ -220,10 +217,10 @@ def exportar_usuarios_csv():
     try:
         with open(caminho, mode='w', newline='', encoding='utf-8') as arquivo_csv:
             escritor = csv.writer(arquivo_csv)
-            escritor.writerow(["ID do Usuário", "Nome", "E-mail", "Telefone", "Foto"])
+            escritor.writerow(["ID do Usuário", "Nome", "E-mail", "Telefone"])
             for id_usuario, info in banco.items():
                 dados = info["dados"]
-                escritor.writerow([id_usuario, dados.get("nome", "N/A"), dados.get("email", "N/A"), dados.get("telefone", "N/A"), info["foto"]])
+                escritor.writerow([id_usuario, dados.get("nome", "N/A"), dados.get("email ", "N/A"), dados.get("telefone", "N/A")])
         atualizar_msg(f"Usuários exportados com sucesso para {caminho}.")
         resposta = messagebox.askyesno("Abrir Arquivo", "Deseja abrir o arquivo CSV exportado?")
         if resposta:
@@ -264,6 +261,7 @@ def exibir_usuarios(pesquisa=""):
                                     command=lambda u=id_usuario: excluir_usuario(u))
             btn_excluir.pack(side=tk.RIGHT, padx=5)
 
+    # Campo de pesquisa
     def buscar_usuarios():
         pesquisa = ent_pesquisa.get().strip()
         exibir_usuarios(pesquisa)
